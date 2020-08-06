@@ -1,16 +1,9 @@
 use std::error::Error;
-use std::io;
 
-use upnp_daemon::run;
+use upnp_daemon::Cli;
 
 fn main() -> Result<(), Box<dyn Error>> {
-    let mut rdr = csv::ReaderBuilder::new()
-        .delimiter(b';')
-        .from_reader(io::stdin());
-
-    for result in rdr.deserialize() {
-        run(result?)?;
-    }
+    Cli::run()?;
 
     Ok(())
 }

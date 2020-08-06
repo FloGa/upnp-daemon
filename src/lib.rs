@@ -4,6 +4,10 @@ use std::net::{SocketAddr, SocketAddrV4};
 use igd::{AddPortError, Gateway, SearchOptions};
 use serde::Deserialize;
 
+mod cli;
+
+pub use cli::Cli;
+
 #[derive(Debug, Deserialize)]
 pub enum PortMappingProtocol {
     TCP,
