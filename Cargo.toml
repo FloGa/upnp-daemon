@@ -13,6 +13,7 @@ license = "WTFPL"
 exclude = ["/bump", "/sync_readme_with_doc"]
 
 [dependencies]
+clap = "2.33.2"
 csv = "1.1"
 get_if_addrs = "0.5.3"
 igd = "0.11.0"
