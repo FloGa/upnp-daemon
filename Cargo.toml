@@ -4,7 +4,7 @@ version = "0.1.0-SNAPSHOT"
 authors = ["Florian Gamböck <mail@floga.de>"]
 edition = "2018"
 
-description = "A daemon for continously opening ports via UPnP."
+description = "A daemon for continuously opening ports via UPnP."
 repository = "https://github.com/FloGa/upnp-daemon"
 readme = "README.md"
 categories = ["network-programming"]
@@ -15,6 +15,7 @@ exclude = ["/bump", "/sync_readme_with_doc"]
 [dependencies]
 clap = "2.33.2"
 csv = "1.1"
+daemonize = "0.4.1"
 get_if_addrs = "0.5.3"
 igd = "0.11.0"
 serde = { version = "1", features = ["derive"] }
