@@ -2,6 +2,7 @@ use std::error::Error;
 use std::net::{SocketAddr, SocketAddrV4};
 
 use igd::{AddPortError, Gateway, SearchOptions};
+use log::debug;
 use serde::Deserialize;
 
 pub use cli::Cli;
@@ -101,7 +102,9 @@ pub fn run(options: Options) -> Result<(), Box<dyn Error>> {
     let f = || gateway.add_port(protocol, port, addr, ttl, &comment);
     f().or_else(|e| match e {
         AddPortError::PortInUse => {
+            debug!("Port already in use. Delete mapping.");
             gateway.remove_port(protocol, port).unwrap();
+            debug!("Retry port mapping.");
             f()
         }
         e => Err(e),

@@ -4,8 +4,9 @@ use std::{fs, thread};
 
 use clap::{crate_authors, crate_description, crate_name, crate_version, App, Arg};
 use daemonize::Daemonize;
+use log::info;
 
-use crate::run;
+use crate::{run, Options};
 
 const ARG_FILE: &str = "file";
 const ARG_FOREGROUND: &str = "foreground";
@@ -54,7 +55,9 @@ impl Cli {
             let mut rdr = csv::ReaderBuilder::new().delimiter(b';').from_path(&file)?;
 
             for result in rdr.deserialize() {
-                run(result?)?;
+                let options: Options = result?;
+                info!("Processing: {:?}", options);
+                run(options)?;
             }
 
             if oneshot {
