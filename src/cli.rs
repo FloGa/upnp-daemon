@@ -9,6 +9,7 @@ use crate::run;
 
 const ARG_FILE: &str = "file";
 const ARG_FOREGROUND: &str = "foreground";
+const ARG_ONESHOT: &str = "oneshot";
 
 pub struct Cli;
 
@@ -30,12 +31,17 @@ impl Cli {
                     .short(&ARG_FOREGROUND[0..1].to_uppercase())
                     .long(ARG_FOREGROUND)
                     .help("Run in foreground instead of forking to background"),
+                Arg::with_name(ARG_ONESHOT)
+                    .short("1")
+                    .long(ARG_ONESHOT)
+                    .help("Run just one time instead of continuously"),
             ])
             .get_matches_safe()
             .unwrap_or_else(|e| e.exit());
 
         let file = fs::canonicalize(arguments.value_of_os(ARG_FILE).unwrap())?;
         let foreground = arguments.is_present(ARG_FOREGROUND);
+        let oneshot = arguments.is_present(ARG_ONESHOT);
 
         if !foreground {
             Daemonize::new()
@@ -51,7 +57,11 @@ impl Cli {
                 run(result?)?;
             }
 
-            thread::sleep(Duration::from_secs(60));
+            if oneshot {
+                break;
+            } else {
+                thread::sleep(Duration::from_secs(60));
+            }
         }
 
         Ok(())
