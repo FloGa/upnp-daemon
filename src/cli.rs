@@ -1,7 +1,9 @@
 use std::error::Error;
-use std::fs;
+use std::time::Duration;
+use std::{fs, thread};
 
 use clap::{crate_authors, crate_description, crate_name, crate_version, App, Arg};
+use daemonize::Daemonize;
 
 use crate::run;
 
@@ -27,10 +29,19 @@ impl Cli {
 
         let file = fs::canonicalize(arguments.value_of_os(ARG_FILE).unwrap())?;
 
-        let mut rdr = csv::ReaderBuilder::new().delimiter(b';').from_path(&file)?;
+        Daemonize::new()
+            .pid_file(format!("/tmp/{}.pid", crate_name!()))
+            .start()
+            .expect("Failed to daemonize.");
 
-        for result in rdr.deserialize() {
-            run(result?)?;
+        loop {
+            let mut rdr = csv::ReaderBuilder::new().delimiter(b';').from_path(&file)?;
+
+            for result in rdr.deserialize() {
+                run(result?)?;
+            }
+
+            thread::sleep(Duration::from_secs(60));
         }
 
         Ok(())
