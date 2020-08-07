@@ -1,4 +1,5 @@
 use std::error::Error;
+use std::fs;
 
 use clap::{crate_authors, crate_description, crate_name, crate_version, App, Arg};
 
@@ -24,9 +25,9 @@ impl Cli {
             .get_matches_safe()
             .unwrap_or_else(|e| e.exit());
 
-        let file = arguments.value_of_os(ARG_FILE).unwrap();
+        let file = fs::canonicalize(arguments.value_of_os(ARG_FILE).unwrap())?;
 
-        let mut rdr = csv::ReaderBuilder::new().delimiter(b';').from_path(file)?;
+        let mut rdr = csv::ReaderBuilder::new().delimiter(b';').from_path(&file)?;
 
         for result in rdr.deserialize() {
             run(result?)?;
