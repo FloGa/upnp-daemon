@@ -10,7 +10,7 @@ readme = "README.md"
 categories = ["network-programming"]
 license = "WTFPL"
 
-exclude = ["/bump", "/sync_readme_with_doc"]
+exclude = ["/bump", "/sync_readme_with_doc.bash"]
 
 [dependencies]
 clap = "2.33.2"
