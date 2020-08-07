@@ -29,7 +29,7 @@ pub struct Options {
     pub address: Option<String>,
     pub port: u16,
     pub protocol: PortMappingProtocol,
-    pub ttl: u32,
+    pub duration: u32,
     pub comment: String,
 }
 
@@ -69,7 +69,7 @@ fn find_gateway_and_addr() -> (Gateway, SocketAddr) {
 pub fn run(options: Options) -> Result<(), Box<dyn Error>> {
     let port = options.port;
     let protocol = options.protocol.into();
-    let ttl = options.ttl;
+    let duration = options.duration;
     let comment = options.comment;
 
     let (gateway, addr) = match options.address {
@@ -99,7 +99,7 @@ pub fn run(options: Options) -> Result<(), Box<dyn Error>> {
         }
     };
 
-    let f = || gateway.add_port(protocol, port, addr, ttl, &comment);
+    let f = || gateway.add_port(protocol, port, addr, duration, &comment);
     f().or_else(|e| match e {
         AddPortError::PortInUse => {
             debug!("Port already in use. Delete mapping.");
