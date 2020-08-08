@@ -1,4 +1,4 @@
-# Changes in 0.1.0-RC
+# Changes in 0.1.0
 
 -   Add first working prototype
 
