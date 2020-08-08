@@ -1,0 +1,127 @@
+#!/bin/bash
+
+NL=$'\n'
+
+die() {
+    echo "ERROR: $*"
+    usage
+    exit 1
+}
+
+usage() {
+    echo "Usage: $(basename "$0") <action> <version>"
+    echo
+    echo "    Whereas <action> can be:"
+    echo "    version     do a version bump"
+    echo "    cycle       start a new cycle"
+}
+
+_prepend() {
+    local name=$1 text=$2
+    local tmp
+    tmp=$(mktemp)
+    echo "$text" >"$tmp"
+    [ -f "$name" ] && cat "$name" >>"$tmp"
+    mv "$tmp" "$name"
+}
+
+# Update version strings in files.
+_update_files() {
+    if [ -n "$1" ]; then
+        VERSION=$1
+    else
+        die "No version string given."
+    fi
+
+    echo "$VERSION" >VERSION
+
+    if [[ "$VERSION" != *.*.0* ]]; then
+        git show master:Cargo.lock >Cargo.lock
+        git show master:Cargo.toml >Cargo.toml
+    fi
+
+    local needle='^version = .+$'
+    local replace="version = \"$VERSION\""
+    sed -i -E "s/$needle/$replace/" Cargo.toml
+
+    cargo check -p "$(cargo pkgid)"
+}
+
+# Update version strings after version change.
+#
+# This function will be executed after hotfix and release start and finish.
+version() {
+    if [ -n "$1" ]; then
+        VERSION=$1
+    else
+        die "No version string given."
+    fi
+
+    _update_files "$VERSION"
+
+    [ -f CHANGES.md ] && \
+        head -n1 CHANGES.md | grep -q "since" && \
+        sed -i "1,2d" CHANGES.md
+
+    [[ ! "$VERSION" =~ "SNAPSHOT" ]] && \
+        _prepend CHANGES.md "# Changes in $VERSION$NL"
+}
+
+# Update files to a new development cycle.
+cycle() {
+    version "$1"
+    _prepend CHANGES.md "# Changes since latest release$NL"
+}
+
+# Resolve the merge conflict that naturally appears after hotfixes.
+resolve() {
+    local cur_version new_version
+    cur_version=$(git describe --abbrev=0 --tags develop)
+    new_version=$(git describe --abbrev=0 --tags master)
+
+    if [ "$cur_version" = "$new_version" ]; then
+        echo "No conflict to resolve."
+        exit 0
+    fi
+
+    _update_files "$new_version"
+
+    {
+        git show develop:CHANGES.md |
+            sed --quiet '1,/^#.*'"$cur_version"'$/p' | head -n-1
+        git show master:CHANGES.md |
+            sed --quiet '/^#.*'"$new_version"'$/,/^#.*'"$cur_version"'$/p'
+        git show develop:CHANGES.md |
+            sed --quiet '/^#.*'"$cur_version"'$/,$p' | tail -n+2
+    } >CHANGES.md
+
+    files | xargs -0 git add
+    git commit
+}
+
+# Return the files that have been modified by this script.
+files() {
+    printf '%s\0' CHANGES.md VERSION Cargo.toml Cargo.lock
+}
+
+# --- Main --- #
+
+cd "$(dirname "$(readlink -e "$0")")" || die "cd failed."
+
+case "$1" in
+    version)
+        version "$2"
+        ;;
+    cycle)
+        cycle "$2"
+        ;;
+    resolve)
+        resolve
+        ;;
+    files)
+        files
+        ;;
+    *)
+        die "Unknown action."
+        ;;
+esac
