@@ -1,8 +1,9 @@
 use std::error::Error;
+use std::fs;
 use std::fs::File;
 use std::path::Path;
+use std::sync::mpsc::{channel, RecvTimeoutError};
 use std::time::Duration;
-use std::{fs, thread};
 
 use clap::{crate_authors, crate_description, crate_name, crate_version, value_t, App, Arg};
 use csv::Reader;
@@ -75,6 +76,16 @@ impl Cli {
                 .expect("Failed to daemonize.");
         }
 
+        let (tx_quitter, rx_quitter) = channel();
+
+        {
+            let tx_quitter = tx_quitter.clone();
+            ctrlc::set_handler(move || {
+                tx_quitter.send(true).unwrap();
+            })
+            .expect("Error setting Ctrl-C handler");
+        }
+
         loop {
             let mut rdr = get_csv_reader(&file)?;
 
@@ -85,9 +96,21 @@ impl Cli {
             }
 
             if oneshot {
-                break;
-            } else {
-                thread::sleep(Duration::from_secs(interval));
+                tx_quitter.send(true)?;
+            }
+
+            match rx_quitter.recv_timeout(Duration::from_secs(interval)) {
+                Err(RecvTimeoutError::Timeout) => {
+                    // Timeout reached without being interrupted, continue with loop
+                }
+                Err(e) => {
+                    // Something bad happened
+                    panic!("{}", e);
+                }
+                Ok(_) => {
+                    // Quit signal received, break loop and quit nicely
+                    break;
+                }
             }
         }
 
