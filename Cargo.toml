@@ -16,9 +16,9 @@ exclude = ["/bump", "/sync_readme_with_doc.bash"]
 clap = "2.33.2"
 csv = "1.1"
 ctrlc = { version = "3.0", features = ["termination"] }
-env_logger = "0.7.1"
+env_logger = "0.8.3"
 get_if_addrs = "0.5.3"
-igd = "0.11.0"
+igd = "0.12.0"
 log = "0.4.11"
 serde = { version = "1", features = ["derive"] }
 
