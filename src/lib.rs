@@ -160,7 +160,7 @@ use std::error::Error;
 use std::net::{SocketAddr, SocketAddrV4};
 
 use igd::{AddPortError, Gateway, SearchOptions};
-use log::debug;
+use log::{debug, warn};
 use serde::Deserialize;
 
 pub use cli::Cli;
@@ -254,6 +254,21 @@ fn get_gateway_and_address_from_options(
             (gateway, addr)
         }
     }
+}
+
+fn delete(options: Options) {
+    let port = options.port;
+    let protocol = options.protocol.into();
+
+    let (gateway, _) = get_gateway_and_address_from_options(options.address, port);
+
+    gateway.remove_port(protocol, port).unwrap_or_else(|e| {
+        warn!(
+            "The following, non-fatal error appeared while deleting port {}:",
+            port
+        );
+        warn!("{}", e);
+    });
 }
 
 fn run(options: Options) -> Result<(), Box<dyn Error>> {
