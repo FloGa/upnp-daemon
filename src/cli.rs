@@ -1,8 +1,11 @@
 use std::error::Error;
+use std::fs::File;
+use std::path::Path;
 use std::time::Duration;
 use std::{fs, thread};
 
 use clap::{crate_authors, crate_description, crate_name, crate_version, value_t, App, Arg};
+use csv::Reader;
 #[cfg(unix)]
 use daemonize::Daemonize;
 use log::info;
@@ -14,6 +17,10 @@ const ARG_FILE: &str = "file";
 const ARG_FOREGROUND: &str = "foreground";
 const ARG_ONESHOT: &str = "oneshot";
 const ARG_INTERVAL: &str = "interval";
+
+fn get_csv_reader<P: AsRef<Path>>(file: P) -> csv::Result<Reader<File>> {
+    return csv::ReaderBuilder::new().delimiter(b';').from_path(&file);
+}
 
 pub struct Cli;
 
@@ -69,7 +76,7 @@ impl Cli {
         }
 
         loop {
-            let mut rdr = csv::ReaderBuilder::new().delimiter(b';').from_path(&file)?;
+            let mut rdr = get_csv_reader(&file)?;
 
             for result in rdr.deserialize() {
                 let options: Options = result?;
