@@ -1,5 +1,11 @@
 # Changes since latest release
 
+-   Make daemonize specific to Unix
+
+    Since the daemonize library only works on Unix like systems, make
+    everything related to it also specific to Unix. This makes the program
+    buildable and usable under Windows systems, too.
+
 # Changes in 0.1.0
 
 -   Add first working prototype
