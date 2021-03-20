@@ -1,19 +1,29 @@
 use std::error::Error;
+use std::fs;
+use std::fs::File;
+use std::path::Path;
+use std::sync::mpsc::{channel, RecvTimeoutError};
 use std::time::Duration;
-use std::{fs, thread};
 
 use clap::{crate_authors, crate_description, crate_name, crate_version, value_t, App, Arg};
+use csv::Reader;
 #[cfg(unix)]
 use daemonize::Daemonize;
 use log::info;
 
-use crate::{run, Options};
+use crate::{delete, run, Options};
 
 const ARG_FILE: &str = "file";
 #[cfg(unix)]
 const ARG_FOREGROUND: &str = "foreground";
 const ARG_ONESHOT: &str = "oneshot";
 const ARG_INTERVAL: &str = "interval";
+const ARG_CLOSE_ON_EXIT: &str = "close-ports-on-exit";
+const ARG_ONLY_CLOSE: &str = "only-close-ports";
+
+fn get_csv_reader<P: AsRef<Path>>(file: P) -> csv::Result<Reader<File>> {
+    return csv::ReaderBuilder::new().delimiter(b';').from_path(&file);
+}
 
 pub struct Cli;
 
@@ -46,6 +56,12 @@ impl Cli {
                     .help("Specify update interval in seconds")
                     .takes_value(true)
                     .number_of_values(1),
+                Arg::with_name(ARG_CLOSE_ON_EXIT)
+                    .long(ARG_CLOSE_ON_EXIT)
+                    .help("Close specified ports on program exit"),
+                Arg::with_name(ARG_ONLY_CLOSE)
+                    .long(ARG_ONLY_CLOSE)
+                    .help("Only close specified ports and exit"),
             ])
             .get_matches_safe()
             .unwrap_or_else(|e| e.exit());
@@ -59,6 +75,8 @@ impl Cli {
         } else {
             60
         };
+        let close_on_exit = arguments.is_present(ARG_CLOSE_ON_EXIT);
+        let only_close = arguments.is_present(ARG_ONLY_CLOSE);
 
         #[cfg(unix)]
         if !foreground {
@@ -68,19 +86,55 @@ impl Cli {
                 .expect("Failed to daemonize.");
         }
 
-        loop {
-            let mut rdr = csv::ReaderBuilder::new().delimiter(b';').from_path(&file)?;
+        let (tx_quitter, rx_quitter) = channel();
 
-            for result in rdr.deserialize() {
-                let options: Options = result?;
-                info!("Processing: {:?}", options);
-                run(options)?;
+        {
+            let tx_quitter = tx_quitter.clone();
+            ctrlc::set_handler(move || {
+                tx_quitter.send(true).unwrap();
+            })
+            .expect("Error setting Ctrl-C handler");
+        }
+
+        loop {
+            if !only_close {
+                let mut rdr = get_csv_reader(&file)?;
+
+                for result in rdr.deserialize() {
+                    let options: Options = result?;
+                    info!("Processing: {:?}", options);
+                    run(options)?;
+                }
             }
 
-            if oneshot {
-                break;
-            } else {
-                thread::sleep(Duration::from_secs(interval));
+            if oneshot || only_close {
+                tx_quitter.send(true)?;
+            }
+
+            match rx_quitter.recv_timeout(Duration::from_secs(interval)) {
+                Err(RecvTimeoutError::Timeout) => {
+                    // Timeout reached without being interrupted, continue with loop
+                }
+                Err(e) => {
+                    // Something bad happened
+                    panic!("{}", e);
+                }
+                Ok(_) => {
+                    // Quit signal received, break loop and quit nicely
+
+                    if close_on_exit {
+                        let mut rdr = get_csv_reader(&file)?;
+
+                        // Delete open port mappings
+                        for result in rdr.deserialize() {
+                            let options: Options = result?;
+                            info!("Deleting: {:?}", options);
+                            delete(options);
+                        }
+                    }
+
+                    break;
+                }
             }
         }
 

@@ -86,6 +86,31 @@ You could of course leave off the `foreground` flag, but then you will not
 know when the process has finished, which could take some time, depending on
 the size of the mapping file.
 
+### Closing Ports
+
+If you want to close your opened ports when the program exits, you can use the
+`close-ports-on-exit` flag, like so:
+
+```shell script
+upnp-daemon --close-ports-on-exit --file ports.csv
+```
+
+If the program later terminates, either by using the `kill` command or by
+sending a `SIGINT` in foreground mode, the currently defined ports in the
+configuration file will be closed. Errors will be logged, but are not fatal,
+so they will not cause the program to panic. Those errors might arise, for
+example, when a port has not been opened in the first place.
+
+If you just want to close all defined ports, without even running the main
+program, you can use the `--only-close-ports` flag, like so:
+
+```shell script
+upnp-daemon --foreground --only-close-ports --file ports.csv
+```
+
+The `foreground` flag here is optional, but it is useful if you need to know
+when all ports have been closed, since the program only terminates then.
+
 ### Logging
 
 If you want to activate logging to have a better understanding what the

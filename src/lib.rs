@@ -86,6 +86,31 @@
 //! know when the process has finished, which could take some time, depending on
 //! the size of the mapping file.
 //!
+//! ### Closing Ports
+//!
+//! If you want to close your opened ports when the program exits, you can use the
+//! `close-ports-on-exit` flag, like so:
+//!
+//! ```shell script
+//! upnp-daemon --close-ports-on-exit --file ports.csv
+//! ```
+//!
+//! If the program later terminates, either by using the `kill` command or by
+//! sending a `SIGINT` in foreground mode, the currently defined ports in the
+//! configuration file will be closed. Errors will be logged, but are not fatal,
+//! so they will not cause the program to panic. Those errors might arise, for
+//! example, when a port has not been opened in the first place.
+//!
+//! If you just want to close all defined ports, without even running the main
+//! program, you can use the `--only-close-ports` flag, like so:
+//!
+//! ```shell script
+//! upnp-daemon --foreground --only-close-ports --file ports.csv
+//! ```
+//!
+//! The `foreground` flag here is optional, but it is useful if you need to know
+//! when all ports have been closed, since the program only terminates then.
+//!
 //! ### Logging
 //!
 //! If you want to activate logging to have a better understanding what the
@@ -160,7 +185,7 @@ use std::error::Error;
 use std::net::{SocketAddr, SocketAddrV4};
 
 use igd::{AddPortError, Gateway, SearchOptions};
-use log::debug;
+use log::{debug, warn};
 use serde::Deserialize;
 
 pub use cli::Cli;
@@ -224,13 +249,11 @@ fn find_gateway_and_addr() -> (Gateway, SocketAddr) {
         .unwrap()
 }
 
-pub fn run(options: Options) -> Result<(), Box<dyn Error>> {
-    let port = options.port;
-    let protocol = options.protocol.into();
-    let duration = options.duration;
-    let comment = options.comment;
-
-    let (gateway, addr) = match options.address {
+fn get_gateway_and_address_from_options(
+    address: Option<String>,
+    port: u16,
+) -> (Gateway, SocketAddrV4) {
+    match address {
         None => {
             let (gateway, mut addr) = find_gateway_and_addr();
             addr.set_port(port);
@@ -255,7 +278,31 @@ pub fn run(options: Options) -> Result<(), Box<dyn Error>> {
 
             (gateway, addr)
         }
-    };
+    }
+}
+
+fn delete(options: Options) {
+    let port = options.port;
+    let protocol = options.protocol.into();
+
+    let (gateway, _) = get_gateway_and_address_from_options(options.address, port);
+
+    gateway.remove_port(protocol, port).unwrap_or_else(|e| {
+        warn!(
+            "The following, non-fatal error appeared while deleting port {}:",
+            port
+        );
+        warn!("{}", e);
+    });
+}
+
+fn run(options: Options) -> Result<(), Box<dyn Error>> {
+    let port = options.port;
+    let protocol = options.protocol.into();
+    let duration = options.duration;
+    let comment = options.comment;
+
+    let (gateway, addr) = get_gateway_and_address_from_options(options.address, port);
 
     let f = || gateway.add_port(protocol, port, addr, duration, &comment);
     f().or_else(|e| match e {
