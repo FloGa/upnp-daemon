@@ -256,7 +256,7 @@ fn get_gateway_and_address_from_options(
     }
 }
 
-pub fn run(options: Options) -> Result<(), Box<dyn Error>> {
+fn run(options: Options) -> Result<(), Box<dyn Error>> {
     let port = options.port;
     let protocol = options.protocol.into();
     let duration = options.duration;
