@@ -3,12 +3,14 @@ use std::time::Duration;
 use std::{fs, thread};
 
 use clap::{crate_authors, crate_description, crate_name, crate_version, value_t, App, Arg};
+#[cfg(unix)]
 use daemonize::Daemonize;
 use log::info;
 
 use crate::{run, Options};
 
 const ARG_FILE: &str = "file";
+#[cfg(unix)]
 const ARG_FOREGROUND: &str = "foreground";
 const ARG_ONESHOT: &str = "oneshot";
 const ARG_INTERVAL: &str = "interval";
@@ -29,6 +31,7 @@ impl Cli {
                     .required(true)
                     .takes_value(true)
                     .number_of_values(1),
+                #[cfg(unix)]
                 Arg::with_name(ARG_FOREGROUND)
                     .short(&ARG_FOREGROUND[0..1].to_uppercase())
                     .long(ARG_FOREGROUND)
@@ -48,6 +51,7 @@ impl Cli {
             .unwrap_or_else(|e| e.exit());
 
         let file = fs::canonicalize(arguments.value_of_os(ARG_FILE).unwrap())?;
+        #[cfg(unix)]
         let foreground = arguments.is_present(ARG_FOREGROUND);
         let oneshot = arguments.is_present(ARG_ONESHOT);
         let interval = if arguments.is_present(ARG_INTERVAL) {
@@ -56,6 +60,7 @@ impl Cli {
             60
         };
 
+        #[cfg(unix)]
         if !foreground {
             Daemonize::new()
                 .pid_file(format!("/tmp/{}.pid", crate_name!()))
