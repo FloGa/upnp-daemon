@@ -11,13 +11,14 @@ use csv::Reader;
 use daemonize::Daemonize;
 use log::info;
 
-use crate::{run, Options};
+use crate::{delete, run, Options};
 
 const ARG_FILE: &str = "file";
 #[cfg(unix)]
 const ARG_FOREGROUND: &str = "foreground";
 const ARG_ONESHOT: &str = "oneshot";
 const ARG_INTERVAL: &str = "interval";
+const ARG_CLOSE_ON_EXIT: &str = "close-ports-on-exit";
 
 fn get_csv_reader<P: AsRef<Path>>(file: P) -> csv::Result<Reader<File>> {
     return csv::ReaderBuilder::new().delimiter(b';').from_path(&file);
@@ -54,6 +55,9 @@ impl Cli {
                     .help("Specify update interval in seconds")
                     .takes_value(true)
                     .number_of_values(1),
+                Arg::with_name(ARG_CLOSE_ON_EXIT)
+                    .long(ARG_CLOSE_ON_EXIT)
+                    .help("Close specified ports on program exit"),
             ])
             .get_matches_safe()
             .unwrap_or_else(|e| e.exit());
@@ -67,6 +71,7 @@ impl Cli {
         } else {
             60
         };
+        let close_on_exit = arguments.is_present(ARG_CLOSE_ON_EXIT);
 
         #[cfg(unix)]
         if !foreground {
@@ -109,6 +114,18 @@ impl Cli {
                 }
                 Ok(_) => {
                     // Quit signal received, break loop and quit nicely
+
+                    if close_on_exit {
+                        let mut rdr = get_csv_reader(&file)?;
+
+                        // Delete open port mappings
+                        for result in rdr.deserialize() {
+                            let options: Options = result?;
+                            info!("Deleting: {:?}", options);
+                            delete(options);
+                        }
+                    }
+
                     break;
                 }
             }
