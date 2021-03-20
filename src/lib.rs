@@ -224,13 +224,11 @@ fn find_gateway_and_addr() -> (Gateway, SocketAddr) {
         .unwrap()
 }
 
-pub fn run(options: Options) -> Result<(), Box<dyn Error>> {
-    let port = options.port;
-    let protocol = options.protocol.into();
-    let duration = options.duration;
-    let comment = options.comment;
-
-    let (gateway, addr) = match options.address {
+fn get_gateway_and_address_from_options(
+    address: Option<String>,
+    port: u16,
+) -> (Gateway, SocketAddrV4) {
+    match address {
         None => {
             let (gateway, mut addr) = find_gateway_and_addr();
             addr.set_port(port);
@@ -255,7 +253,16 @@ pub fn run(options: Options) -> Result<(), Box<dyn Error>> {
 
             (gateway, addr)
         }
-    };
+    }
+}
+
+pub fn run(options: Options) -> Result<(), Box<dyn Error>> {
+    let port = options.port;
+    let protocol = options.protocol.into();
+    let duration = options.duration;
+    let comment = options.comment;
+
+    let (gateway, addr) = get_gateway_and_address_from_options(options.address, port);
 
     let f = || gateway.add_port(protocol, port, addr, duration, &comment);
     f().or_else(|e| match e {
