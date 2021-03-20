@@ -19,6 +19,7 @@ const ARG_FOREGROUND: &str = "foreground";
 const ARG_ONESHOT: &str = "oneshot";
 const ARG_INTERVAL: &str = "interval";
 const ARG_CLOSE_ON_EXIT: &str = "close-ports-on-exit";
+const ARG_ONLY_CLOSE: &str = "only-close-ports";
 
 fn get_csv_reader<P: AsRef<Path>>(file: P) -> csv::Result<Reader<File>> {
     return csv::ReaderBuilder::new().delimiter(b';').from_path(&file);
@@ -58,6 +59,9 @@ impl Cli {
                 Arg::with_name(ARG_CLOSE_ON_EXIT)
                     .long(ARG_CLOSE_ON_EXIT)
                     .help("Close specified ports on program exit"),
+                Arg::with_name(ARG_ONLY_CLOSE)
+                    .long(ARG_ONLY_CLOSE)
+                    .help("Only close specified ports and exit"),
             ])
             .get_matches_safe()
             .unwrap_or_else(|e| e.exit());
@@ -72,6 +76,7 @@ impl Cli {
             60
         };
         let close_on_exit = arguments.is_present(ARG_CLOSE_ON_EXIT);
+        let only_close = arguments.is_present(ARG_ONLY_CLOSE);
 
         #[cfg(unix)]
         if !foreground {
@@ -92,15 +97,17 @@ impl Cli {
         }
 
         loop {
-            let mut rdr = get_csv_reader(&file)?;
+            if !only_close {
+                let mut rdr = get_csv_reader(&file)?;
 
-            for result in rdr.deserialize() {
-                let options: Options = result?;
-                info!("Processing: {:?}", options);
-                run(options)?;
+                for result in rdr.deserialize() {
+                    let options: Options = result?;
+                    info!("Processing: {:?}", options);
+                    run(options)?;
+                }
             }
 
-            if oneshot {
+            if oneshot || only_close {
                 tx_quitter.send(true)?;
             }
 
