@@ -50,6 +50,11 @@
 //! kill $(</tmp/upnp-daemon.pid)
 //! ```
 //!
+//! **A note to Windows users:** The `daemonize` library that is used to send this
+//! program to the background, does only work on Unix like systems. You can still
+//! install and use the program on Windows, but it will behave as if you started
+//! it with the `--foreground` option (see [below](#foreground-operation)).
+//!
 //! ### Foreground Operation
 //!
 //! Some service monitors expect services to start in the foreground, so they can
@@ -62,6 +67,11 @@
 //!
 //! This will leave the program running in the foreground. You can terminate it by
 //! issuing a `SIGINT` (Ctrl-C), for example.
+//!
+//! **A note to Windows users:** This option flag does not exist in the Windows
+//! version of this program. Instead, foreground operation is the default
+//! operation mode, since due to technical limitations, it cannot be sent to the
+//! background there.
 //!
 //! ### Oneshot Mode
 //!
