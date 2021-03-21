@@ -50,6 +50,11 @@
 //! kill $(</tmp/upnp-daemon.pid)
 //! ```
 //!
+//! **A note to Windows users:** The `daemonize` library that is used to send this
+//! program to the background, does only work on Unix like systems. You can still
+//! install and use the program on Windows, but it will behave as if you started
+//! it with the `--foreground` option (see [below](#foreground-operation)).
+//!
 //! ### Foreground Operation
 //!
 //! Some service monitors expect services to start in the foreground, so they can
@@ -63,6 +68,11 @@
 //! This will leave the program running in the foreground. You can terminate it by
 //! issuing a `SIGINT` (Ctrl-C), for example.
 //!
+//! **A note to Windows users:** This option flag does not exist in the Windows
+//! version of this program. Instead, foreground operation is the default
+//! operation mode, since due to technical limitations, it cannot be sent to the
+//! background there.
+//!
 //! ### Oneshot Mode
 //!
 //! If you just want to test your configuration, without letting the daemon run
@@ -75,6 +85,31 @@
 //! You could of course leave off the `foreground` flag, but then you will not
 //! know when the process has finished, which could take some time, depending on
 //! the size of the mapping file.
+//!
+//! ### Closing Ports
+//!
+//! If you want to close your opened ports when the program exits, you can use the
+//! `close-ports-on-exit` flag, like so:
+//!
+//! ```shell script
+//! upnp-daemon --close-ports-on-exit --file ports.csv
+//! ```
+//!
+//! If the program later terminates, either by using the `kill` command or by
+//! sending a `SIGINT` in foreground mode, the currently defined ports in the
+//! configuration file will be closed. Errors will be logged, but are not fatal,
+//! so they will not cause the program to panic. Those errors might arise, for
+//! example, when a port has not been opened in the first place.
+//!
+//! If you just want to close all defined ports, without even running the main
+//! program, you can use the `--only-close-ports` flag, like so:
+//!
+//! ```shell script
+//! upnp-daemon --foreground --only-close-ports --file ports.csv
+//! ```
+//!
+//! The `foreground` flag here is optional, but it is useful if you need to know
+//! when all ports have been closed, since the program only terminates then.
 //!
 //! ### Logging
 //!
@@ -150,7 +185,7 @@ use std::error::Error;
 use std::net::{SocketAddr, SocketAddrV4};
 
 use igd::{AddPortError, Gateway, SearchOptions};
-use log::debug;
+use log::{debug, warn};
 use serde::Deserialize;
 
 pub use cli::Cli;
@@ -214,13 +249,11 @@ fn find_gateway_and_addr() -> (Gateway, SocketAddr) {
         .unwrap()
 }
 
-pub fn run(options: Options) -> Result<(), Box<dyn Error>> {
-    let port = options.port;
-    let protocol = options.protocol.into();
-    let duration = options.duration;
-    let comment = options.comment;
-
-    let (gateway, addr) = match options.address {
+fn get_gateway_and_address_from_options(
+    address: Option<String>,
+    port: u16,
+) -> (Gateway, SocketAddrV4) {
+    match address {
         None => {
             let (gateway, mut addr) = find_gateway_and_addr();
             addr.set_port(port);
@@ -245,7 +278,31 @@ pub fn run(options: Options) -> Result<(), Box<dyn Error>> {
 
             (gateway, addr)
         }
-    };
+    }
+}
+
+fn delete(options: Options) {
+    let port = options.port;
+    let protocol = options.protocol.into();
+
+    let (gateway, _) = get_gateway_and_address_from_options(options.address, port);
+
+    gateway.remove_port(protocol, port).unwrap_or_else(|e| {
+        warn!(
+            "The following, non-fatal error appeared while deleting port {}:",
+            port
+        );
+        warn!("{}", e);
+    });
+}
+
+fn run(options: Options) -> Result<(), Box<dyn Error>> {
+    let port = options.port;
+    let protocol = options.protocol.into();
+    let duration = options.duration;
+    let comment = options.comment;
+
+    let (gateway, addr) = get_gateway_and_address_from_options(options.address, port);
 
     let f = || gateway.add_port(protocol, port, addr, duration, &comment);
     f().or_else(|e| match e {

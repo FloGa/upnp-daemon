@@ -50,6 +50,11 @@ Bash can do it like so:
 kill $(</tmp/upnp-daemon.pid)
 ```
 
+**A note to Windows users:** The `daemonize` library that is used to send this
+program to the background, does only work on Unix like systems. You can still
+install and use the program on Windows, but it will behave as if you started
+it with the `--foreground` option (see [below](#foreground-operation)).
+
 ### Foreground Operation
 
 Some service monitors expect services to start in the foreground, so they can
@@ -63,6 +68,11 @@ upnp-daemon --foreground --file ports.csv
 This will leave the program running in the foreground. You can terminate it by
 issuing a `SIGINT` (Ctrl-C), for example.
 
+**A note to Windows users:** This option flag does not exist in the Windows
+version of this program. Instead, foreground operation is the default
+operation mode, since due to technical limitations, it cannot be sent to the
+background there.
+
 ### Oneshot Mode
 
 If you just want to test your configuration, without letting the daemon run
@@ -75,6 +85,31 @@ upnp-daemon --foreground --oneshot --file ports.csv
 You could of course leave off the `foreground` flag, but then you will not
 know when the process has finished, which could take some time, depending on
 the size of the mapping file.
+
+### Closing Ports
+
+If you want to close your opened ports when the program exits, you can use the
+`close-ports-on-exit` flag, like so:
+
+```shell script
+upnp-daemon --close-ports-on-exit --file ports.csv
+```
+
+If the program later terminates, either by using the `kill` command or by
+sending a `SIGINT` in foreground mode, the currently defined ports in the
+configuration file will be closed. Errors will be logged, but are not fatal,
+so they will not cause the program to panic. Those errors might arise, for
+example, when a port has not been opened in the first place.
+
+If you just want to close all defined ports, without even running the main
+program, you can use the `--only-close-ports` flag, like so:
+
+```shell script
+upnp-daemon --foreground --only-close-ports --file ports.csv
+```
+
+The `foreground` flag here is optional, but it is useful if you need to know
+when all ports have been closed, since the program only terminates then.
 
 ### Logging
 

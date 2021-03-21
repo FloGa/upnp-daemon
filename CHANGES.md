@@ -1,3 +1,29 @@
+# Changes in 0.2.0
+
+-   Make daemonize specific to Unix
+
+    Since the daemonize library only works on Unix like systems, make
+    everything related to it also specific to Unix. This makes the program
+    buildable and usable under Windows systems, too.
+
+-   Add ctrlc as dependency
+
+-   Use quitter channel to coordinate clean shutdown
+
+-   Introduce method to delete ports
+
+-   Support closing ports on exit
+
+    The new command line flag `--close-ports-on-exit` triggers a last run
+    through the config file on exit, where every defined port will be
+    deleted from the open port mapping table on the router.
+
+-   Support only closing ports
+
+    The new command line flag `--only-close-ports` will not trigger the
+    usual run to open ports, but instead just deletes the defined ports from
+    the open ports mapping on the router and then exits.
+
 # Changes in 0.1.0
 
 -   Add first working prototype
