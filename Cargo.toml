@@ -1,8 +1,8 @@
 [package]
 name = "upnp-daemon"
-version = "0.3.0-SNAPSHOT"
+version = "0.3.0"
 authors = ["Florian Gamböck <mail@floga.de>"]
-edition = "2018"
+edition = "2021"
 
 description = "A daemon for continuously opening ports via UPnP."
 repository = "https://github.com/FloGa/upnp-daemon"
@@ -16,7 +16,7 @@ exclude = ["/bump", "/sync_readme_with_doc.bash"]
 clap = "2.33.2"
 csv = "1.1"
 ctrlc = { version = "3.0", features = ["termination"] }
-env_logger = "0.8.3"
+env_logger = "0.9"
 get_if_addrs = "0.5.3"
 igd = "0.12.0"
 log = "0.4.11"
