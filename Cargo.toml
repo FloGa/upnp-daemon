@@ -2,7 +2,7 @@
 name = "upnp-daemon"
 version = "0.3.0-RC"
 authors = ["Florian Gamböck <mail@floga.de>"]
-edition = "2018"
+edition = "2021"
 
 description = "A daemon for continuously opening ports via UPnP."
 repository = "https://github.com/FloGa/upnp-daemon"
