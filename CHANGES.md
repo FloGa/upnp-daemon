@@ -1,3 +1,5 @@
+# Changes since latest release
+
 # Changes in 0.3.0
 
 -   Make only-close actually work
