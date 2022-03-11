@@ -1,5 +1,14 @@
 # Changes since latest release
 
+-   Make only-close actually work
+
+    Due to a missing boolean check, the `--only-close-ports` flag did not
+    work standalone, it must have been accompanied by
+    `--close-ports-on-exit` to work.
+
+    This restriction is fixed now, `--only-close-ports` now works standalone
+    as intended.
+
 # Changes in 0.2.0
 
 -   Make daemonize specific to Unix
