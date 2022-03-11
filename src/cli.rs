@@ -122,7 +122,7 @@ impl Cli {
                 Ok(_) => {
                     // Quit signal received, break loop and quit nicely
 
-                    if close_on_exit {
+                    if close_on_exit || only_close {
                         let mut rdr = get_csv_reader(&file)?;
 
                         // Delete open port mappings
