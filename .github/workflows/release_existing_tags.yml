@@ -1,0 +1,10 @@
+name: Release existing tags
+
+on:
+  workflow_dispatch:
+
+jobs:
+  call-release-exisiting-workflow:
+    uses: FloGa/rust-workflows/.github/workflows/release_existing_tags.yml@0.1.1
+    with:
+      targets-config: ./.github/targets.json

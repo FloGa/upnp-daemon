@@ -1,0 +1,15 @@
+name: Test
+
+on:
+  pull_request:
+
+  push:
+    branches:
+      - develop
+      - 'feature/**'
+
+  workflow_call:
+
+jobs:
+  call-test-workflow:
+    uses: FloGa/rust-workflows/.github/workflows/test.yml@0.1.1
