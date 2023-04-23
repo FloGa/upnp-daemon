@@ -1,5 +1,9 @@
 # Changes since latest release
 
+# Changes in 0.3.1
+
+-   Update dependencies to get security fixes
+
 # Changes in 0.3.0
 
 -   Make only-close actually work

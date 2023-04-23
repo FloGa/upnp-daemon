@@ -9,7 +9,21 @@ on:
       - 'feature/**'
 
   workflow_call:
+    inputs:
+      test-args:
+        type: string
+        required: false
+        description: Additional arguments for "cargo test"
+
+  workflow_dispatch:
+    inputs:
+      test-args:
+        type: string
+        required: false
+        description: Additional arguments for "cargo test"
 
 jobs:
   call-test-workflow:
-    uses: FloGa/rust-workflows/.github/workflows/test.yml@0.1.1
+    uses: FloGa/rust-workflows/.github/workflows/test.yml@0.2.0
+    with:
+      test-args: ${{ inputs.test-args }}
