@@ -1,4 +1,4 @@
-# Changes in 0.3.1-RC
+# Changes in 0.3.1
 
 -   Update dependencies to get security fixes
 
