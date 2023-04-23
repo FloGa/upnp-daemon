@@ -1,0 +1,26 @@
+name: Release
+
+on:
+  push:
+    branches:
+      - 'hotfix/**'
+      - 'release/**'
+    tags-ignore:
+      - '_**'
+
+  workflow_dispatch:
+
+jobs:
+  test:
+    uses: ./.github/workflows/test.yml
+    with:
+      test-args: -- --include-ignored
+
+  call-release-workflow:
+    uses: FloGa/rust-workflows/.github/workflows/release.yml@0.2.0
+    with:
+      targets-config: ./.github/targets.json
+    secrets:
+      CRATES_IO_TOKEN: ${{ secrets.CRATES_IO_TOKEN }}
+    needs:
+      - test
