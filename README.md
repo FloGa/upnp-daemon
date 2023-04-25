@@ -30,6 +30,11 @@ cargo install upnp-daemon
 
 ## Usage
 
+<!--% !cargo --quiet run -- --help | tail -n+3 %-->
+
+```text
+```
+
 In the most basic case, a call might look like so:
 
 ```shell script
