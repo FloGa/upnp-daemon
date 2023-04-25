@@ -1,5 +1,7 @@
 # Changes since latest release
 
+-   Upgrade clap for a better CLI experience
+
 # Changes in 0.3.1
 
 -   Update dependencies to get security fixes
