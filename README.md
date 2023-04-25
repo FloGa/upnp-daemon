@@ -1,5 +1,20 @@
 # UPnP daemon
 
+[![badge github]][url github]
+[![badge crates.io]][url crates.io]
+[![badge docs.rs]][url docs.rs]
+[![badge license]][url license]
+
+[badge github]: https://img.shields.io/badge/github-FloGa%2Fupnp--daemon-green
+[badge crates.io]: https://img.shields.io/crates/v/upnp-daemon
+[badge docs.rs]: https://img.shields.io/docsrs/upnp-daemon
+[badge license]: https://img.shields.io/crates/l/upnp-daemon
+
+[url github]: https://github.com/FloGa/upnp-daemon
+[url crates.io]: https://crates.io/crates/upnp-daemon
+[url docs.rs]: https://docs.rs/upnp-daemon
+[url license]: https://github.com/FloGa/upnp-daemon/blob/develop/LICENSE
+
 A daemon for continuously opening ports via UPnP.
 
 ## Motivation
@@ -25,8 +40,20 @@ on the fly.
 upnp-daemon can be installed easily through Cargo via `crates.io`:
 
 ```shell script
-cargo install upnp-daemon
+cargo install --locked upnp-daemon
 ```
+
+Please note that the `--locked` flag is necessary here to have the exact same
+dependencies as when the application was tagged and tested. Without it, you
+might get more up-to-date versions of dependencies, but you have the risk of
+undefined and unexpected behavior if the dependencies changed some
+functionalities. The application might even fail to build if the public API of
+a dependency changed too much.
+
+Alternatively, pre-built binaries can be downloaded from the [GitHub
+releases][gh-releases] page.
+
+[gh-releases]: https://github.com/FloGa/upnp-daemon/releases
 
 ## Usage
 
