@@ -33,6 +33,17 @@ cargo install upnp-daemon
 <!--% !cargo --quiet run -- --help | tail -n+3 %-->
 
 ```text
+Usage: upnp-daemon [OPTIONS] --file <FILE>
+
+Options:
+  -f, --file <FILE>          The file with the port descriptions, in CSV format
+  -F, --foreground           Run in foreground instead of forking to background
+  -1, --oneshot              Run just one time instead of continuously
+  -n, --interval <INTERVAL>  Specify update interval in seconds [default: 60]
+      --close-ports-on-exit  Close specified ports on program exit
+      --only-close-ports     Only close specified ports and exit
+  -h, --help                 Print help
+  -V, --version              Print version
 ```
 
 In the most basic case, a call might look like so:
