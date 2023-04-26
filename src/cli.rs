@@ -1,6 +1,7 @@
 use std::error::Error;
 use std::fs::File;
-use std::path::{Path, PathBuf};
+use std::io::{stdin, BufReader, Read};
+use std::path::PathBuf;
 use std::sync::mpsc::{channel, RecvTimeoutError};
 use std::time::Duration;
 
@@ -15,16 +16,45 @@ use log::info;
 
 use crate::{delete, run, Options};
 
-fn get_csv_reader<P: AsRef<Path>>(file: P) -> csv::Result<Reader<File>> {
-    return csv::ReaderBuilder::new().delimiter(b';').from_path(&file);
+#[derive(Clone)]
+enum Input {
+    File(PathBuf),
+    Stdin,
+}
+
+impl Input {
+    fn get_reader(&self) -> Result<Box<dyn Read>, std::io::Error> {
+        Ok(match self {
+            Input::File(path) => Box::new(BufReader::new(File::open(path)?)),
+            Input::Stdin => Box::new(stdin()),
+        })
+    }
+}
+
+impl TryFrom<PathBuf> for Input {
+    type Error = std::io::Error;
+
+    fn try_from(path: PathBuf) -> Result<Self, Self::Error> {
+        Ok(if path == PathBuf::from("-") {
+            Input::Stdin
+        } else {
+            Input::File(path.canonicalize()?)
+        })
+    }
+}
+
+fn get_csv_reader(file: &Input) -> csv::Result<Reader<impl Read + Sized>> {
+    Ok(csv::ReaderBuilder::new()
+        .delimiter(b';')
+        .from_reader(file.get_reader()?))
 }
 
 #[derive(Parser)]
 #[clap(author, version, about, long_about = None)]
 pub struct Cli {
-    #[arg(long, short, value_parser = PathBufValueParser::new().try_map(|p| p.canonicalize()))]
+    #[arg(long, short, value_parser = PathBufValueParser::new().try_map(Input::try_from))]
     /// The file with the port descriptions, in CSV format
-    file: PathBuf,
+    file: Input,
 
     #[cfg(unix)]
     #[arg(long, short = 'F')]
