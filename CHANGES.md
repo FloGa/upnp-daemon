@@ -2,6 +2,15 @@
 
 -   Upgrade clap for a better CLI experience
 
+-   Support reading from stdin
+
+-   Use tempfile to read from stdin
+
+    This can be achieved by giving "-" as a filename. Internally, we create
+    a temporary file, write the contents of stdin to it and read from it on
+    each iteration. This way, we can use input from stdin even in daemon
+    mode, where file handles to stdin, stdout, and stderr are closed.
+
 # Changes in 0.3.1
 
 -   Update dependencies to get security fixes
