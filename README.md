@@ -63,7 +63,7 @@ releases][gh-releases] page.
 Usage: upnp-daemon [OPTIONS] --file <FILE>
 
 Options:
-  -f, --file <FILE>          The file with the port descriptions, in CSV format
+  -f, --file <FILE>          The file (or "-" for stdin) with the port descriptions, in CSV format
   -F, --foreground           Run in foreground instead of forking to background
   -1, --oneshot              Run just one time instead of continuously
   -n, --interval <INTERVAL>  Specify update interval in seconds [default: 60]
