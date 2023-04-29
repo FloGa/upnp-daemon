@@ -13,6 +13,7 @@ license = "WTFPL"
 exclude = ["/bump", "/sync_readme_with_doc.bash"]
 
 [dependencies]
+anyhow = "1.0.70"
 clap = { version = "4.2.4", features = ["cargo", "derive"] }
 csv = "1.1"
 ctrlc = { version = "3.0", features = ["termination"] }
