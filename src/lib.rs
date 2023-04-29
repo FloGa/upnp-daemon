@@ -270,7 +270,7 @@ impl From<PortMappingProtocol> for igd::PortMappingProtocol {
 }
 
 #[derive(Debug, Deserialize)]
-pub struct Options {
+pub struct UpnpConfig {
     pub address: Option<String>,
     pub port: u16,
     pub protocol: PortMappingProtocol,
@@ -343,7 +343,7 @@ fn get_gateway_and_address_from_options(
     }
 }
 
-fn delete(options: Options) {
+fn delete(options: UpnpConfig) {
     let port = options.port;
     let protocol = options.protocol.into();
 
@@ -358,7 +358,7 @@ fn delete(options: Options) {
     });
 }
 
-fn run(options: Options) -> Result<(), Box<dyn Error>> {
+fn run(options: UpnpConfig) -> Result<(), Box<dyn Error>> {
     let port = options.port;
     let protocol = options.protocol.into();
     let duration = options.duration;

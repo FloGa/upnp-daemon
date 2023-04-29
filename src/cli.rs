@@ -15,7 +15,7 @@ use daemonize::Daemonize;
 use log::info;
 use tempfile::tempfile;
 
-use crate::{delete, run, Options};
+use crate::{delete, run, UpnpConfig};
 
 #[derive(Clone)]
 enum CliInput {
@@ -136,9 +136,9 @@ impl Cli {
                 let mut rdr = get_csv_reader(&file)?;
 
                 for result in rdr.deserialize() {
-                    let options: Options = result?;
-                    info!("Processing: {:?}", options);
-                    run(options)?;
+                    let config: UpnpConfig = result?;
+                    info!("Processing: {:?}", config);
+                    run(config)?;
                 }
             }
 
@@ -162,9 +162,9 @@ impl Cli {
 
                         // Delete open port mappings
                         for result in rdr.deserialize() {
-                            let options: Options = result?;
-                            info!("Deleting: {:?}", options);
-                            delete(options);
+                            let config: UpnpConfig = result?;
+                            info!("Deleting: {:?}", config);
+                            delete(config);
                         }
                     }
 
