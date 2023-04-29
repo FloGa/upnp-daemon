@@ -387,7 +387,7 @@ fn add_ports(
 ) -> Result<(), Box<dyn Error>> {
     for config in configs {
         let config = config?;
-        info!("Processing: {:?}", config);
+        info!("Add port: {:?}", config);
         config.add_port()?;
     }
 
@@ -399,7 +399,7 @@ fn delete_ports(
 ) -> Result<(), Box<dyn Error>> {
     for config in configs {
         let config = config?;
-        info!("Deleting: {:?}", config);
+        info!("Remove port: {:?}", config);
         config.remove_port();
     }
 
