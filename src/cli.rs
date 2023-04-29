@@ -15,7 +15,7 @@ use daemonize::Daemonize;
 use log::info;
 use tempfile::tempfile;
 
-use crate::{delete, run, UpnpConfig};
+use crate::UpnpConfig;
 
 #[derive(Clone)]
 enum CliInput {
@@ -138,7 +138,7 @@ impl Cli {
                 for result in rdr.deserialize() {
                     let config: UpnpConfig = result?;
                     info!("Processing: {:?}", config);
-                    run(config)?;
+                    config.run()?;
                 }
             }
 
@@ -164,7 +164,7 @@ impl Cli {
                         for result in rdr.deserialize() {
                             let config: UpnpConfig = result?;
                             info!("Deleting: {:?}", config);
-                            delete(config);
+                            config.delete();
                         }
                     }
 

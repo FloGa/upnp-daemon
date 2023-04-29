@@ -254,7 +254,7 @@ pub use cli::Cli;
 
 mod cli;
 
-#[derive(Debug, Deserialize)]
+#[derive(Clone, Copy, Debug, Deserialize)]
 pub enum PortMappingProtocol {
     TCP,
     UDP,
@@ -267,15 +267,6 @@ impl From<PortMappingProtocol> for igd::PortMappingProtocol {
             PortMappingProtocol::UDP => igd::PortMappingProtocol::UDP,
         }
     }
-}
-
-#[derive(Debug, Deserialize)]
-pub struct UpnpConfig {
-    pub address: Option<String>,
-    pub port: u16,
-    pub protocol: PortMappingProtocol,
-    pub duration: u32,
-    pub comment: String,
 }
 
 fn find_gateway_with_bind_addr(bind_addr: SocketAddr) -> Gateway {
@@ -312,7 +303,7 @@ fn find_gateway_and_addr() -> (Gateway, SocketAddr) {
 }
 
 fn get_gateway_and_address_from_options(
-    address: Option<String>,
+    address: &Option<String>,
     port: u16,
 ) -> (Gateway, SocketAddrV4) {
     match address {
@@ -343,39 +334,50 @@ fn get_gateway_and_address_from_options(
     }
 }
 
-fn delete(options: UpnpConfig) {
-    let port = options.port;
-    let protocol = options.protocol.into();
-
-    let (gateway, _) = get_gateway_and_address_from_options(options.address, port);
-
-    gateway.remove_port(protocol, port).unwrap_or_else(|e| {
-        warn!(
-            "The following, non-fatal error appeared while deleting port {}:",
-            port
-        );
-        warn!("{}", e);
-    });
+#[derive(Debug, Deserialize)]
+pub struct UpnpConfig {
+    pub address: Option<String>,
+    pub port: u16,
+    pub protocol: PortMappingProtocol,
+    pub duration: u32,
+    pub comment: String,
 }
 
-fn run(options: UpnpConfig) -> Result<(), Box<dyn Error>> {
-    let port = options.port;
-    let protocol = options.protocol.into();
-    let duration = options.duration;
-    let comment = options.comment;
+impl UpnpConfig {
+    fn delete(&self) {
+        let port = self.port;
+        let protocol = self.protocol.into();
 
-    let (gateway, addr) = get_gateway_and_address_from_options(options.address, port);
+        let (gateway, _) = get_gateway_and_address_from_options(&self.address, port);
 
-    let f = || gateway.add_port(protocol, port, addr, duration, &comment);
-    f().or_else(|e| match e {
-        AddPortError::PortInUse => {
-            debug!("Port already in use. Delete mapping.");
-            gateway.remove_port(protocol, port).unwrap();
-            debug!("Retry port mapping.");
-            f()
-        }
-        e => Err(e),
-    })?;
+        gateway.remove_port(protocol, port).unwrap_or_else(|e| {
+            warn!(
+                "The following, non-fatal error appeared while deleting port {}:",
+                port
+            );
+            warn!("{}", e);
+        });
+    }
 
-    Ok(())
+    fn run(&self) -> Result<(), Box<dyn Error>> {
+        let port = self.port;
+        let protocol = self.protocol.into();
+        let duration = self.duration;
+        let comment = &self.comment;
+
+        let (gateway, addr) = get_gateway_and_address_from_options(&self.address, port);
+
+        let f = || gateway.add_port(protocol, port, addr, duration, comment);
+        f().or_else(|e| match e {
+            AddPortError::PortInUse => {
+                debug!("Port already in use. Delete mapping.");
+                gateway.remove_port(protocol, port).unwrap();
+                debug!("Retry port mapping.");
+                f()
+            }
+            e => Err(e),
+        })?;
+
+        Ok(())
+    }
 }
