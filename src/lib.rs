@@ -247,7 +247,7 @@ use std::error::Error;
 use std::net::{SocketAddr, SocketAddrV4};
 
 use igd::{AddPortError, Gateway, SearchOptions};
-use log::{debug, warn};
+use log::{debug, info, warn};
 use serde::Deserialize;
 
 pub use cli::Cli;
@@ -380,4 +380,28 @@ impl UpnpConfig {
 
         Ok(())
     }
+}
+
+fn add_ports(
+    configs: impl Iterator<Item = anyhow::Result<UpnpConfig>>,
+) -> Result<(), Box<dyn Error>> {
+    for config in configs {
+        let config = config?;
+        info!("Processing: {:?}", config);
+        config.add_port()?;
+    }
+
+    Ok(())
+}
+
+fn delete_ports(
+    configs: impl Iterator<Item = anyhow::Result<UpnpConfig>>,
+) -> Result<(), Box<dyn Error>> {
+    for config in configs {
+        let config = config?;
+        info!("Deleting: {:?}", config);
+        config.remove_port();
+    }
+
+    Ok(())
 }
