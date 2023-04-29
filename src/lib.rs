@@ -247,14 +247,14 @@ use std::error::Error;
 use std::net::{SocketAddr, SocketAddrV4};
 
 use igd::{AddPortError, Gateway, SearchOptions};
-use log::{debug, warn};
+use log::{debug, info, warn};
 use serde::Deserialize;
 
 pub use cli::Cli;
 
 mod cli;
 
-#[derive(Debug, Deserialize)]
+#[derive(Clone, Copy, Debug, Deserialize)]
 pub enum PortMappingProtocol {
     TCP,
     UDP,
@@ -267,15 +267,6 @@ impl From<PortMappingProtocol> for igd::PortMappingProtocol {
             PortMappingProtocol::UDP => igd::PortMappingProtocol::UDP,
         }
     }
-}
-
-#[derive(Debug, Deserialize)]
-pub struct Options {
-    pub address: Option<String>,
-    pub port: u16,
-    pub protocol: PortMappingProtocol,
-    pub duration: u32,
-    pub comment: String,
 }
 
 fn find_gateway_with_bind_addr(bind_addr: SocketAddr) -> Gateway {
@@ -312,7 +303,7 @@ fn find_gateway_and_addr() -> (Gateway, SocketAddr) {
 }
 
 fn get_gateway_and_address_from_options(
-    address: Option<String>,
+    address: &Option<String>,
     port: u16,
 ) -> (Gateway, SocketAddrV4) {
     match address {
@@ -343,39 +334,74 @@ fn get_gateway_and_address_from_options(
     }
 }
 
-fn delete(options: Options) {
-    let port = options.port;
-    let protocol = options.protocol.into();
-
-    let (gateway, _) = get_gateway_and_address_from_options(options.address, port);
-
-    gateway.remove_port(protocol, port).unwrap_or_else(|e| {
-        warn!(
-            "The following, non-fatal error appeared while deleting port {}:",
-            port
-        );
-        warn!("{}", e);
-    });
+#[derive(Debug, Deserialize)]
+pub struct UpnpConfig {
+    pub address: Option<String>,
+    pub port: u16,
+    pub protocol: PortMappingProtocol,
+    pub duration: u32,
+    pub comment: String,
 }
 
-fn run(options: Options) -> Result<(), Box<dyn Error>> {
-    let port = options.port;
-    let protocol = options.protocol.into();
-    let duration = options.duration;
-    let comment = options.comment;
+impl UpnpConfig {
+    fn remove_port(&self) {
+        let port = self.port;
+        let protocol = self.protocol.into();
 
-    let (gateway, addr) = get_gateway_and_address_from_options(options.address, port);
+        let (gateway, _) = get_gateway_and_address_from_options(&self.address, port);
 
-    let f = || gateway.add_port(protocol, port, addr, duration, &comment);
-    f().or_else(|e| match e {
-        AddPortError::PortInUse => {
-            debug!("Port already in use. Delete mapping.");
-            gateway.remove_port(protocol, port).unwrap();
-            debug!("Retry port mapping.");
-            f()
-        }
-        e => Err(e),
-    })?;
+        gateway.remove_port(protocol, port).unwrap_or_else(|e| {
+            warn!(
+                "The following, non-fatal error appeared while deleting port {}:",
+                port
+            );
+            warn!("{}", e);
+        });
+    }
+
+    fn add_port(&self) -> Result<(), Box<dyn Error>> {
+        let port = self.port;
+        let protocol = self.protocol.into();
+        let duration = self.duration;
+        let comment = &self.comment;
+
+        let (gateway, addr) = get_gateway_and_address_from_options(&self.address, port);
+
+        let f = || gateway.add_port(protocol, port, addr, duration, comment);
+        f().or_else(|e| match e {
+            AddPortError::PortInUse => {
+                debug!("Port already in use. Delete mapping.");
+                gateway.remove_port(protocol, port).unwrap();
+                debug!("Retry port mapping.");
+                f()
+            }
+            e => Err(e),
+        })?;
+
+        Ok(())
+    }
+}
+
+fn add_ports(
+    configs: impl Iterator<Item = anyhow::Result<UpnpConfig>>,
+) -> Result<(), Box<dyn Error>> {
+    for config in configs {
+        let config = config?;
+        info!("Add port: {:?}", config);
+        config.add_port()?;
+    }
+
+    Ok(())
+}
+
+fn delete_ports(
+    configs: impl Iterator<Item = anyhow::Result<UpnpConfig>>,
+) -> Result<(), Box<dyn Error>> {
+    for config in configs {
+        let config = config?;
+        info!("Remove port: {:?}", config);
+        config.remove_port();
+    }
 
     Ok(())
 }

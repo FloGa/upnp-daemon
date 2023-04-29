@@ -12,10 +12,9 @@ use clap::{
 use csv::Reader;
 #[cfg(unix)]
 use daemonize::Daemonize;
-use log::info;
 use tempfile::tempfile;
 
-use crate::{delete, run, Options};
+use crate::{add_ports, delete_ports, UpnpConfig};
 
 #[derive(Clone)]
 enum CliInput {
@@ -77,6 +76,14 @@ fn get_csv_reader(csv_input: &CsvInput) -> Result<Reader<File>, std::io::Error> 
     })
 }
 
+fn get_configs_from_reader(
+    reader: &mut Reader<File>,
+) -> impl Iterator<Item = anyhow::Result<UpnpConfig>> + '_ {
+    reader
+        .deserialize()
+        .map(|result| result.map_err(anyhow::Error::from))
+}
+
 #[derive(Parser)]
 #[clap(author, version, about, long_about = None)]
 pub struct Cli {
@@ -134,12 +141,8 @@ impl Cli {
         loop {
             if !cli.only_close_ports {
                 let mut rdr = get_csv_reader(&file)?;
-
-                for result in rdr.deserialize() {
-                    let options: Options = result?;
-                    info!("Processing: {:?}", options);
-                    run(options)?;
-                }
+                let configs = get_configs_from_reader(&mut rdr);
+                add_ports(configs)?;
             }
 
             if cli.oneshot || cli.only_close_ports {
@@ -159,13 +162,8 @@ impl Cli {
 
                     if cli.close_ports_on_exit || cli.only_close_ports {
                         let mut rdr = get_csv_reader(&file)?;
-
-                        // Delete open port mappings
-                        for result in rdr.deserialize() {
-                            let options: Options = result?;
-                            info!("Deleting: {:?}", options);
-                            delete(options);
-                        }
+                        let configs = get_configs_from_reader(&mut rdr);
+                        delete_ports(configs)?;
                     }
 
                     break;

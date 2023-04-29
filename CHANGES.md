@@ -11,6 +11,8 @@
     each iteration. This way, we can use input from stdin even in daemon
     mode, where file handles to stdin, stdout, and stderr are closed.
 
+-   Internal optimizations
+
 # Changes in 0.3.1
 
 -   Update dependencies to get security fixes
