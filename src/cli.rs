@@ -138,7 +138,7 @@ impl Cli {
                 for result in rdr.deserialize() {
                     let config: UpnpConfig = result?;
                     info!("Processing: {:?}", config);
-                    config.run()?;
+                    config.add_port()?;
                 }
             }
 
@@ -164,7 +164,7 @@ impl Cli {
                         for result in rdr.deserialize() {
                             let config: UpnpConfig = result?;
                             info!("Deleting: {:?}", config);
-                            config.delete();
+                            config.remove_port();
                         }
                     }
 

@@ -344,7 +344,7 @@ pub struct UpnpConfig {
 }
 
 impl UpnpConfig {
-    fn delete(&self) {
+    fn remove_port(&self) {
         let port = self.port;
         let protocol = self.protocol.into();
 
@@ -359,7 +359,7 @@ impl UpnpConfig {
         });
     }
 
-    fn run(&self) -> Result<(), Box<dyn Error>> {
+    fn add_port(&self) -> Result<(), Box<dyn Error>> {
         let port = self.port;
         let protocol = self.protocol.into();
         let duration = self.duration;
