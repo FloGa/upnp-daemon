@@ -13,6 +13,14 @@
 
 -   Internal optimizations
 
+-   Do not bail out on partly wrong config
+
+    The config is read in entry by entry. If one entry is badly formatted,
+    do not bail out and kill the whole application. Rather, write an error
+    to the log and continue with the next entry.
+
+-   Support config file in JSON format
+
 # Changes in 0.3.1
 
 -   Update dependencies to get security fixes
