@@ -247,7 +247,7 @@ use std::error::Error;
 use std::net::{SocketAddr, SocketAddrV4};
 
 use igd::{AddPortError, Gateway, SearchOptions};
-use log::{debug, info, warn};
+use log::{debug, error, info, warn};
 use serde::Deserialize;
 
 pub use cli::Cli;
@@ -382,26 +382,32 @@ impl UpnpConfig {
     }
 }
 
-fn add_ports(
-    configs: impl Iterator<Item = anyhow::Result<UpnpConfig>>,
-) -> Result<(), Box<dyn Error>> {
+fn add_ports(configs: impl Iterator<Item = anyhow::Result<UpnpConfig>>) {
     for config in configs {
-        let config = config?;
-        info!("Add port: {:?}", config);
-        config.add_port()?;
+        match config {
+            Ok(config) => {
+                info!("Add port: {:?}", config);
+                if let Err(err) = config.add_port() {
+                    error!("{}", err);
+                }
+            }
+            Err(err) => {
+                error!("{}", err);
+            }
+        }
     }
-
-    Ok(())
 }
 
-fn delete_ports(
-    configs: impl Iterator<Item = anyhow::Result<UpnpConfig>>,
-) -> Result<(), Box<dyn Error>> {
+fn delete_ports(configs: impl Iterator<Item = anyhow::Result<UpnpConfig>>) {
     for config in configs {
-        let config = config?;
-        info!("Remove port: {:?}", config);
-        config.remove_port();
+        match config {
+            Ok(config) => {
+                info!("Remove port: {:?}", config);
+                config.remove_port();
+            }
+            Err(err) => {
+                error!("{}", err);
+            }
+        }
     }
-
-    Ok(())
 }

@@ -142,7 +142,7 @@ impl Cli {
             if !cli.only_close_ports {
                 let mut rdr = get_csv_reader(&file)?;
                 let configs = get_configs_from_reader(&mut rdr);
-                add_ports(configs)?;
+                add_ports(configs);
             }
 
             if cli.oneshot || cli.only_close_ports {
@@ -163,7 +163,7 @@ impl Cli {
                     if cli.close_ports_on_exit || cli.only_close_ports {
                         let mut rdr = get_csv_reader(&file)?;
                         let configs = get_configs_from_reader(&mut rdr);
-                        delete_ports(configs)?;
+                        delete_ports(configs);
                     }
 
                     break;
