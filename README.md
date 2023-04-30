@@ -63,7 +63,8 @@ releases][gh-releases] page.
 Usage: upnp-daemon [OPTIONS] --file <FILE>
 
 Options:
-  -f, --file <FILE>          The file (or "-" for stdin) with the port descriptions, in CSV format
+  -f, --file <FILE>          The file (or "-" for stdin) with the port descriptions
+      --format <FORMAT>      The format of the configuration file [default: csv] [possible values: csv, json]
   -F, --foreground           Run in foreground instead of forking to background
   -1, --oneshot              Run just one time instead of continuously
   -n, --interval <INTERVAL>  Specify update interval in seconds [default: 60]
@@ -197,6 +198,11 @@ daemon mode. This might change in a future release.
 
 ## Config File Format
 
+The config file can be given as either CSV (default for now) or JSON (with
+`--format json`). The names and contents of the fields are always the same.
+
+### CSV
+
 The format of the port mapping file is a simple CSV file, like the following
 example:
 
@@ -208,6 +214,56 @@ address;port;protocol;duration;comment
 
 Please note that the first line is mandatory at the moment, it is needed to
 accurately map the fields to the internal options.
+
+### JSON
+
+A config file in JSON format with the above contents could look like this:
+
+```json
+[
+  {
+    "address": "192.168.0.10",
+    "port": 12345,
+    "protocol": "UDP",
+    "duration": 60,
+    "comment": "Test 1"
+  },
+  {
+    "address": null,
+    "port": 12346,
+    "protocol": "TCP",
+    "duration": 60,
+    "comment": "Test 2"
+  }
+]
+```
+
+The line breaks and indentations are just for readability, you can format it
+any way you like. You can even go as far and feed in a single line, as long as
+it is a valid JSON array with all required fields in it.
+
+Since `address` is `null` in the second entry, it can also be left out
+completely if you prefer. Also, any key that is not documented below will be
+silently ignored, so you might use them as internal comments for yourself. So
+a config might also look like:
+
+```json
+[
+  {
+    "rationale": "This port is needed for an awesome application!",
+    "may-be-deleted": false,
+    "port": 12347,
+    "protocol": "TCP",
+    "duration": 60,
+    "comment": "Test 3"
+  }
+]
+```
+
+The keys `rationale` and `may-be-deleted` will be ignored by the daemon.
+
+Also, please note that even if you want to add just one port mapping, you need
+to specify a JSON array.
 
 ### Fields
 

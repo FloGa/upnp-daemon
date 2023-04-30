@@ -5,13 +5,15 @@ use std::path::PathBuf;
 use std::sync::mpsc::{channel, RecvTimeoutError};
 use std::time::Duration;
 
+use anyhow::anyhow;
 use clap::{
     builder::{PathBufValueParser, TypedValueParser},
-    crate_name, Parser,
+    crate_name, Parser, ValueEnum,
 };
 use csv::Reader;
 #[cfg(unix)]
 use daemonize::Daemonize;
+use serde_json::Value;
 use tempfile::tempfile;
 
 use crate::{add_ports, delete_ports, UpnpConfig};
@@ -34,12 +36,12 @@ impl TryFrom<PathBuf> for CliInput {
     }
 }
 
-enum CsvInput {
+enum Input {
     File(File),
     PathBuf(PathBuf),
 }
 
-impl TryFrom<CliInput> for CsvInput {
+impl TryFrom<CliInput> for Input {
     type Error = std::io::Error;
 
     fn try_from(cli_input: CliInput) -> Result<Self, Self::Error> {
@@ -59,12 +61,12 @@ impl TryFrom<CliInput> for CsvInput {
     }
 }
 
-fn get_csv_reader(csv_input: &CsvInput) -> Result<Reader<File>, std::io::Error> {
+fn get_csv_reader(input: &Input) -> Result<Reader<File>, std::io::Error> {
     let mut builder = csv::ReaderBuilder::new();
     let reader_builder = builder.delimiter(b';');
 
-    Ok(match csv_input {
-        CsvInput::File(file) => {
+    Ok(match input {
+        Input::File(file) => {
             // Clone file handle, so we don't move the original handle away.
             let mut file = file.try_clone()?;
 
@@ -72,11 +74,11 @@ fn get_csv_reader(csv_input: &CsvInput) -> Result<Reader<File>, std::io::Error> 
             file.rewind()?;
             reader_builder.from_reader(file)
         }
-        CsvInput::PathBuf(pathbuf) => reader_builder.from_path(pathbuf)?,
+        Input::PathBuf(pathbuf) => reader_builder.from_path(pathbuf)?,
     })
 }
 
-fn get_configs_from_reader(
+fn get_configs_from_csv_reader(
     reader: &mut Reader<File>,
 ) -> impl Iterator<Item = anyhow::Result<UpnpConfig>> + '_ {
     reader
@@ -84,12 +86,51 @@ fn get_configs_from_reader(
         .map(|result| result.map_err(anyhow::Error::from))
 }
 
+fn get_configs_from_json(
+    input: &Input,
+) -> anyhow::Result<impl Iterator<Item = anyhow::Result<UpnpConfig>> + '_> {
+    let file = match input {
+        Input::File(file) => {
+            // Clone file handle, so we don't move the original handle away.
+            let mut file = file.try_clone()?;
+
+            // File may have been advanced in previous iteration, so rewind it first.
+            file.rewind()?;
+            file
+        }
+        Input::PathBuf(pathbuf) => File::open(pathbuf)?,
+    };
+
+    let v: Value = serde_json::from_reader(file)?;
+
+    if !v.is_array() {
+        return Err(anyhow!("Input is not a JSON array"));
+    }
+
+    Ok(if let Value::Array(v) = v {
+        v.into_iter()
+            .map(|v| serde_json::from_value::<UpnpConfig>(v).map_err(anyhow::Error::from))
+    } else {
+        unreachable!()
+    })
+}
+
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, ValueEnum)]
+enum CliInputFormat {
+    Csv,
+    Json,
+}
+
 #[derive(Parser)]
 #[clap(author, version, about, long_about = None)]
 pub struct Cli {
     #[arg(long, short, value_parser = PathBufValueParser::new().try_map(CliInput::try_from))]
-    /// The file (or "-" for stdin) with the port descriptions, in CSV format
+    /// The file (or "-" for stdin) with the port descriptions
     file: CliInput,
+
+    #[arg(long, value_enum, default_value_t = CliInputFormat::Csv)]
+    /// The format of the configuration file
+    format: CliInputFormat,
 
     #[cfg(unix)]
     #[arg(long, short = 'F')]
@@ -140,9 +181,17 @@ impl Cli {
 
         loop {
             if !cli.only_close_ports {
-                let mut rdr = get_csv_reader(&file)?;
-                let configs = get_configs_from_reader(&mut rdr);
-                add_ports(configs)?;
+                match cli.format {
+                    CliInputFormat::Csv => {
+                        let mut rdr = get_csv_reader(&file)?;
+                        let configs = get_configs_from_csv_reader(&mut rdr);
+                        add_ports(configs);
+                    }
+                    CliInputFormat::Json => {
+                        let configs = get_configs_from_json(&file)?;
+                        add_ports(configs);
+                    }
+                }
             }
 
             if cli.oneshot || cli.only_close_ports {
@@ -161,9 +210,17 @@ impl Cli {
                     // Quit signal received, break loop and quit nicely
 
                     if cli.close_ports_on_exit || cli.only_close_ports {
-                        let mut rdr = get_csv_reader(&file)?;
-                        let configs = get_configs_from_reader(&mut rdr);
-                        delete_ports(configs)?;
+                        match cli.format {
+                            CliInputFormat::Csv => {
+                                let mut rdr = get_csv_reader(&file)?;
+                                let configs = get_configs_from_csv_reader(&mut rdr);
+                                delete_ports(configs);
+                            }
+                            CliInputFormat::Json => {
+                                let configs = get_configs_from_json(&file)?;
+                                delete_ports(configs);
+                            }
+                        }
                     }
 
                     break;
