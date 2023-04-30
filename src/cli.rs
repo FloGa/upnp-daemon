@@ -34,12 +34,12 @@ impl TryFrom<PathBuf> for CliInput {
     }
 }
 
-enum CsvInput {
+enum Input {
     File(File),
     PathBuf(PathBuf),
 }
 
-impl TryFrom<CliInput> for CsvInput {
+impl TryFrom<CliInput> for Input {
     type Error = std::io::Error;
 
     fn try_from(cli_input: CliInput) -> Result<Self, Self::Error> {
@@ -59,12 +59,12 @@ impl TryFrom<CliInput> for CsvInput {
     }
 }
 
-fn get_csv_reader(csv_input: &CsvInput) -> Result<Reader<File>, std::io::Error> {
+fn get_csv_reader(input: &Input) -> Result<Reader<File>, std::io::Error> {
     let mut builder = csv::ReaderBuilder::new();
     let reader_builder = builder.delimiter(b';');
 
-    Ok(match csv_input {
-        CsvInput::File(file) => {
+    Ok(match input {
+        Input::File(file) => {
             // Clone file handle, so we don't move the original handle away.
             let mut file = file.try_clone()?;
 
@@ -72,7 +72,7 @@ fn get_csv_reader(csv_input: &CsvInput) -> Result<Reader<File>, std::io::Error> 
             file.rewind()?;
             reader_builder.from_reader(file)
         }
-        CsvInput::PathBuf(pathbuf) => reader_builder.from_path(pathbuf)?,
+        Input::PathBuf(pathbuf) => reader_builder.from_path(pathbuf)?,
     })
 }
 
