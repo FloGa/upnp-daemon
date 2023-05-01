@@ -33,6 +33,13 @@
     More examples can be found in the responsible library's documentation:
     https://docs.rs/cidr-utils/0.5.10/cidr_utils/index.html
 
+## Special Thanks
+
+-   Succubyss
+
+    For creating feature requests to add support for reading from stdin, JSON
+    configs, and CIDR IP ranges.
+
 # Changes in 0.3.1
 
 -   Update dependencies to get security fixes
@@ -73,6 +80,13 @@
     The new command line flag `--only-close-ports` will not trigger the
     usual run to open ports, but instead just deletes the defined ports from
     the open ports mapping on the router and then exits.
+
+## Special Thanks
+
+-   Suyash Shandliya (PrisionMike)
+
+    For notifying me about build problems on Windows machines. Hence,
+    daemonize is now a UNIX-only feature.
 
 # Changes in 0.1.0
 
