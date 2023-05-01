@@ -278,6 +278,18 @@ to specify a JSON array.
     device, or if you know your machine's address and want to slightly speed
     up the process.
 
+    You can also enter the IP address in CIDR notation. In that case, the IP
+    range is checked against all connected interfaces and only matching ones
+    are considered. This is useful if you don't know your current IP address
+    (or it might change from time to time), but you know the DHCP
+    configuration of your router.
+
+    Such an IP address might be `192.168.0.10` or `192.168.0.0/24` or even
+    `192.168.0`.
+
+    More examples can be found in the responsible library's documentation:
+    https://docs.rs/cidr-utils/0.5.10/cidr_utils/index.html
+
 -   port
 
     The port number to open for the given IP address. Note that upnp-daemon is

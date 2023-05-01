@@ -21,6 +21,18 @@
 
 -   Support config file in JSON format
 
+-   Support CIDR notation in IP address
+
+    This way, we can give an IP address as a range to match against
+    connected interfaces. This is useful if we don't know our current IP
+    address but we know the DHCP configuration of our router.
+
+    Such an IP address might be `192.168.0.10` or `192.168.0.0/24` or even
+    `192.168.0`.
+
+    More examples can be found in the responsible library's documentation:
+    https://docs.rs/cidr-utils/0.5.10/cidr_utils/index.html
+
 # Changes in 0.3.1
 
 -   Update dependencies to get security fixes
