@@ -300,8 +300,9 @@
 //!     with the mapping in the router.
 
 use std::error::Error;
-use std::net::{SocketAddr, SocketAddrV4};
+use std::net::{IpAddr, SocketAddr, SocketAddrV4};
 
+use cidr_utils::cidr::Ipv4Cidr;
 use igd::{AddPortError, Gateway, SearchOptions};
 use log::{debug, error, info, warn};
 use serde::Deserialize;
@@ -333,7 +334,7 @@ fn find_gateway_with_bind_addr(bind_addr: SocketAddr) -> Gateway {
     igd::search_gateway(options).unwrap()
 }
 
-fn find_gateway_and_addr() -> (Gateway, SocketAddr) {
+fn find_gateway_and_addr(cidr: &Option<Ipv4Cidr>) -> (Gateway, SocketAddr) {
     let ifaces = get_if_addrs::get_if_addrs().unwrap();
     ifaces
         .iter()
@@ -341,17 +342,36 @@ fn find_gateway_and_addr() -> (Gateway, SocketAddr) {
             if iface.is_loopback() || !iface.ip().is_ipv4() {
                 None
             } else {
-                let options = SearchOptions {
-                    bind_addr: format!("{}:0", iface.addr.ip()).parse().unwrap(),
-                    ..Default::default()
+                let iface_ip = match iface.ip() {
+                    IpAddr::V4(ip) => ip,
+                    IpAddr::V6(_) => unreachable!(),
                 };
-                igd::search_gateway(options).ok().and_then(|gateway| {
-                    if let get_if_addrs::IfAddr::V4(addr) = &iface.addr {
-                        Some((gateway, SocketAddr::V4(SocketAddrV4::new(addr.ip, 0))))
-                    } else {
-                        unreachable!()
+
+                match cidr {
+                    Some(cidr) if !cidr.contains(iface_ip) => None,
+                    Some(_) => {
+                        let addr = SocketAddr::new(IpAddr::V4(iface_ip), 0);
+
+                        let gateway = find_gateway_with_bind_addr(addr);
+
+                        Some((gateway, addr))
                     }
-                })
+                    _ => {
+                        let options = SearchOptions {
+                            bind_addr: format!("{}:0", iface.addr.ip()).parse().unwrap(),
+                            ..Default::default()
+                        };
+                        igd::search_gateway(options).ok().and_then(|gateway| {
+                            if let get_if_addrs::IfAddr::V4(addr) = &iface.addr {
+                                Some((gateway, SocketAddr::V4(SocketAddrV4::new(addr.ip, 0))))
+                            } else {
+                                // Anything other than V4 has been ruled out by the first if
+                                // condition.
+                                unreachable!()
+                            }
+                        })
+                    }
+                }
             }
         })
         .next()
@@ -359,13 +379,14 @@ fn find_gateway_and_addr() -> (Gateway, SocketAddr) {
 }
 
 fn get_gateway_and_address_from_options(
-    address: &Option<String>,
+    address: &Option<Ipv4Cidr>,
     port: u16,
 ) -> (Gateway, SocketAddrV4) {
     match address {
-        None => {
-            let (gateway, mut addr) = find_gateway_and_addr();
-            addr.set_port(port);
+        Some(addr) if addr.get_bits() == 32 => {
+            let addr = SocketAddr::new(IpAddr::V4(addr.get_prefix_as_ipv4_addr()), port);
+
+            let gateway = find_gateway_with_bind_addr(addr);
 
             let addr = match addr {
                 SocketAddr::V4(addr) => addr,
@@ -375,10 +396,9 @@ fn get_gateway_and_address_from_options(
             (gateway, addr)
         }
 
-        Some(addr) => {
-            let addr = format!("{}:{}", addr, port).parse().unwrap();
-
-            let gateway = find_gateway_with_bind_addr(addr);
+        _ => {
+            let (gateway, mut addr) = find_gateway_and_addr(address);
+            addr.set_port(port);
 
             let addr = match addr {
                 SocketAddr::V4(addr) => addr,
@@ -392,7 +412,7 @@ fn get_gateway_and_address_from_options(
 
 #[derive(Debug, Deserialize)]
 pub struct UpnpConfig {
-    pub address: Option<String>,
+    pub address: Option<Ipv4Cidr>,
     pub port: u16,
     pub protocol: PortMappingProtocol,
     pub duration: u32,
