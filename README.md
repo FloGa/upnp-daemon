@@ -70,6 +70,7 @@ Options:
   -n, --interval <INTERVAL>  Specify update interval in seconds [default: 60]
       --close-ports-on-exit  Close specified ports on program exit
       --only-close-ports     Only close specified ports and exit
+      --pid-file <PID_FILE>  Absolute path to PID file for daemon mode [default: /tmp/upnp-daemon.pid]
   -h, --help                 Print help
   -V, --version              Print version
 ```
