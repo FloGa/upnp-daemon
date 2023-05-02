@@ -33,6 +33,10 @@
     More examples can be found in the responsible library's documentation:
     https://docs.rs/cidr-utils/0.5.10/cidr_utils/index.html
 
+-   Make pid file configurable
+
+    Custom PID files may now be configured via the `--pid-file` option.
+
 ## Special Thanks
 
 -   Succubyss
