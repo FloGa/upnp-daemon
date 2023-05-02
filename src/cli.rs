@@ -8,7 +8,7 @@ use std::time::Duration;
 use anyhow::anyhow;
 use clap::{
     builder::{PathBufValueParser, TypedValueParser},
-    crate_name, Parser, ValueEnum,
+    Parser, ValueEnum,
 };
 use csv::Reader;
 #[cfg(unix)]
@@ -152,6 +152,11 @@ pub struct Cli {
     #[arg(long)]
     /// Only close specified ports and exit
     only_close_ports: bool,
+
+    #[cfg(unix)]
+    #[arg(long, default_value = "/tmp/upnp-daemon.pid")]
+    /// Absolute path to PID file for daemon mode
+    pid_file: PathBuf,
 }
 
 impl Cli {
@@ -164,7 +169,7 @@ impl Cli {
         #[cfg(unix)]
         if !cli.foreground {
             Daemonize::new()
-                .pid_file(format!("/tmp/{}.pid", crate_name!()))
+                .pid_file(cli.pid_file)
                 .start()
                 .expect("Failed to daemonize.");
         }
