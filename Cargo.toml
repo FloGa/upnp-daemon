@@ -9,8 +9,7 @@ repository = "https://github.com/FloGa/upnp-daemon"
 readme = "README.md"
 categories = ["network-programming"]
 license = "WTFPL"
-
-exclude = ["/bump", "/sync_readme_with_doc.bash"]
+include = ["src/**/*", "LICENSE", "README.md"]
 
 [dependencies]
 anyhow = "1.0.70"
