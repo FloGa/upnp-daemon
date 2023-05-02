@@ -70,6 +70,7 @@ Options:
   -n, --interval <INTERVAL>  Specify update interval in seconds [default: 60]
       --close-ports-on-exit  Close specified ports on program exit
       --only-close-ports     Only close specified ports and exit
+      --pid-file <PID_FILE>  Absolute path to PID file for daemon mode [default: /tmp/upnp-daemon.pid]
   -h, --help                 Print help
   -V, --version              Print version
 ```
@@ -84,9 +85,9 @@ This will start a background process (daemon) that reads in port mappings from
 a CSV file (see [config file format](#config-file-format)) every minute and
 ask the appropriate routers to open those ports.
 
-The PID of the process will be written to `/tmp/upnp-daemon.pid` and locked
-exclusively, so that only one instance is running at a time. To quit it, kill
-the PID that is written in this file.
+The PID of the process will be written to `/tmp/upnp-daemon.pid` by default
+and locked exclusively, so that only one instance is running at a time. To
+quit it, kill the PID that is written in this file.
 
 Bash can do it like so:
 
@@ -94,10 +95,21 @@ Bash can do it like so:
 kill $(</tmp/upnp-daemon.pid)
 ```
 
+If you want the PID to be written to another file, maybe because you want to
+have multiple running instances intentionally, or because your daemon watcher
+expects the file in another place, you can use the `--pid-file` option to
+choose your own file path. Due to technical reasons, this PID file must always
+be given as an absolute path. Please be aware that this application does not
+create folders, so the parent folder of the PID file needs to exist
+beforehand. Also, of course, the user running the application needs to have
+write permission to the folder.
+
 **A note to Windows users:** The `daemonize` library that is used to send this
 program to the background, does only work on Unix like systems. You can still
 install and use the program on Windows, but it will behave as if you started
 it with the `--foreground` option (see [below](#foreground-operation)).
+Therefore, you will also not see the `--pid-file` option on Windows since it
+has no use there.
 
 ### Reading from standard input
 
