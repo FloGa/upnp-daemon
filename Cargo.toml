@@ -15,7 +15,7 @@ exclude = ["/bump", "/sync_readme_with_doc.bash"]
 [dependencies]
 anyhow = "1.0.70"
 cidr-utils = { version = "0.5.10", features = ["serde"] }
-clap = { version = "4.2.4", features = ["cargo", "derive"] }
+clap = { version = "4.2.4", features = ["derive"] }
 csv = "1.1"
 ctrlc = { version = "3.0", features = ["termination"] }
 env_logger = "0.10.0"
