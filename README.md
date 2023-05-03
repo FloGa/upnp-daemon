@@ -227,6 +227,15 @@ address;port;protocol;duration;comment
 Please note that the first line is mandatory at the moment, it is needed to
 accurately map the fields to the internal options.
 
+With the `--csv-delimiter` option, you can choose an arbitrary character to be
+used as a field delimiter in your CSV file. By default, we use the semicolon,
+but if you instead prefer a usual comma, you can just say so with
+`--csv-delimiter ','`.
+
+Please be aware that your shell might interpret the delimiter (for example,
+the semicolon is used in bash to separate two commands), so be sure to
+correctly escape it.
+
 ### JSON
 
 A config file in JSON format with the above contents could look like this:
