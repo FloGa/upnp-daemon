@@ -61,9 +61,9 @@ impl TryFrom<CliInput> for Input {
     }
 }
 
-fn get_csv_reader(input: &Input) -> Result<Reader<File>, std::io::Error> {
+fn get_csv_reader(input: &Input, delim: char) -> Result<Reader<File>, std::io::Error> {
     let mut builder = csv::ReaderBuilder::new();
-    let reader_builder = builder.delimiter(b';');
+    let reader_builder = builder.delimiter(delim as u8);
 
     Ok(match input {
         Input::File(file) => {
@@ -132,6 +132,10 @@ pub struct Cli {
     /// The format of the configuration file
     format: CliInputFormat,
 
+    #[arg(long, short = 'd', default_value_t = ';')]
+    /// Field delimiter when using CSV files
+    csv_delimiter: char,
+
     #[cfg(unix)]
     #[arg(long, short = 'F')]
     /// Run in foreground instead of forking to background
@@ -188,7 +192,7 @@ impl Cli {
             if !cli.only_close_ports {
                 match cli.format {
                     CliInputFormat::Csv => {
-                        let mut rdr = get_csv_reader(&file)?;
+                        let mut rdr = get_csv_reader(&file, cli.csv_delimiter)?;
                         let configs = get_configs_from_csv_reader(&mut rdr);
                         add_ports(configs);
                     }
@@ -217,7 +221,7 @@ impl Cli {
                     if cli.close_ports_on_exit || cli.only_close_ports {
                         match cli.format {
                             CliInputFormat::Csv => {
-                                let mut rdr = get_csv_reader(&file)?;
+                                let mut rdr = get_csv_reader(&file, cli.csv_delimiter)?;
                                 let configs = get_configs_from_csv_reader(&mut rdr);
                                 delete_ports(configs);
                             }
