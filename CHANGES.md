@@ -37,6 +37,16 @@
 
     Custom PID files may now be configured via the `--pid-file` option.
 
+-   Support arbitrary CSV delimiters
+
+    With the new `--csv-delimiter` option, you can configure your CSV file
+    as you like. By default, we use the semicolon, but if you instead prefer
+    a usual comma, you can just say so with `--csv-delimiter ','`.
+
+    Please be aware that your shell might interpret the delimiter (for
+    example, the semicolon is used in bash to separate two commands), so be
+    sure to correctly escape it.
+
 ## Special Thanks
 
 -   Succubyss
