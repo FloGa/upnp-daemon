@@ -63,16 +63,17 @@ releases][gh-releases] page.
 Usage: upnp-daemon [OPTIONS] --file <FILE>
 
 Options:
-  -f, --file <FILE>          The file (or "-" for stdin) with the port descriptions
-      --format <FORMAT>      The format of the configuration file [default: csv] [possible values: csv, json]
-  -F, --foreground           Run in foreground instead of forking to background
-  -1, --oneshot              Run just one time instead of continuously
-  -n, --interval <INTERVAL>  Specify update interval in seconds [default: 60]
-      --close-ports-on-exit  Close specified ports on program exit
-      --only-close-ports     Only close specified ports and exit
-      --pid-file <PID_FILE>  Absolute path to PID file for daemon mode [default: /tmp/upnp-daemon.pid]
-  -h, --help                 Print help
-  -V, --version              Print version
+  -f, --file <FILE>                    The file (or "-" for stdin) with the port descriptions
+      --format <FORMAT>                The format of the configuration file [default: csv] [possible values: csv, json]
+  -d, --csv-delimiter <CSV_DELIMITER>  Field delimiter when using CSV files [default: ;]
+  -F, --foreground                     Run in foreground instead of forking to background
+  -1, --oneshot                        Run just one time instead of continuously
+  -n, --interval <INTERVAL>            Specify update interval in seconds [default: 60]
+      --close-ports-on-exit            Close specified ports on program exit
+      --only-close-ports               Only close specified ports and exit
+      --pid-file <PID_FILE>            Absolute path to PID file for daemon mode [default: /tmp/upnp-daemon.pid]
+  -h, --help                           Print help
+  -V, --version                        Print version
 ```
 
 In the most basic case, a call might look like so:
