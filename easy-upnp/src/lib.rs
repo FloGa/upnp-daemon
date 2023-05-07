@@ -341,10 +341,6 @@ use igd::{AddPortError, Gateway, SearchOptions};
 use log::{debug, error, info, warn};
 use serde::Deserialize;
 
-pub use cli::Cli;
-
-mod cli;
-
 #[derive(Clone, Copy, Debug, Deserialize)]
 pub enum PortMappingProtocol {
     TCP,
@@ -492,7 +488,7 @@ impl UpnpConfig {
     }
 }
 
-fn add_ports(configs: impl Iterator<Item = anyhow::Result<UpnpConfig>>) {
+pub fn add_ports(configs: impl Iterator<Item = anyhow::Result<UpnpConfig>>) {
     for config in configs {
         match config {
             Ok(config) => {
@@ -508,7 +504,7 @@ fn add_ports(configs: impl Iterator<Item = anyhow::Result<UpnpConfig>>) {
     }
 }
 
-fn delete_ports(configs: impl Iterator<Item = anyhow::Result<UpnpConfig>>) {
+pub fn delete_ports(configs: impl Iterator<Item = anyhow::Result<UpnpConfig>>) {
     for config in configs {
         match config {
             Ok(config) => {

@@ -223,6 +223,25 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f578e8e2c440e7297e008bb5486a3a8a194775224bbc23729b0dbdfaeebf162e"
 
 [[package]]
+name = "easy-upnp"
+version = "0.1.0-SNAPSHOT"
+dependencies = [
+ "anyhow",
+ "cidr-utils",
+ "clap",
+ "csv",
+ "ctrlc",
+ "daemonize",
+ "env_logger",
+ "get_if_addrs",
+ "igd",
+ "log",
+ "serde",
+ "serde_json",
+ "tempfile",
+]
+
+[[package]]
 name = "env_logger"
 version = "0.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -710,6 +729,7 @@ dependencies = [
  "csv",
  "ctrlc",
  "daemonize",
+ "easy-upnp",
  "env_logger",
  "get_if_addrs",
  "igd",
