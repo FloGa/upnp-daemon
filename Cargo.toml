@@ -1,6 +1,6 @@
 [package]
 name = "upnp-daemon"
-version = "0.3.1"
+version = "0.4.0"
 authors = ["Florian Gamböck <mail@floga.de>"]
 edition = "2021"
 
@@ -9,11 +9,12 @@ repository = "https://github.com/FloGa/upnp-daemon"
 readme = "README.md"
 categories = ["network-programming"]
 license = "WTFPL"
-
-exclude = ["/bump", "/sync_readme_with_doc.bash"]
+include = ["src/**/*", "LICENSE", "README.md"]
 
 [dependencies]
-clap = "2.33.2"
+anyhow = "1.0.70"
+cidr-utils = { version = "0.5.10", features = ["serde"] }
+clap = { version = "4.2.4", features = ["derive"] }
 csv = "1.1"
 ctrlc = { version = "3.0", features = ["termination"] }
 env_logger = "0.10.0"
@@ -21,6 +22,8 @@ get_if_addrs = "0.5.3"
 igd = "0.12.0"
 log = "0.4.11"
 serde = { version = "1", features = ["derive"] }
+serde_json = "1.0.96"
+tempfile = "3.5.0"
 
 [target.'cfg(unix)'.dependencies]
 daemonize = "0.5.0"

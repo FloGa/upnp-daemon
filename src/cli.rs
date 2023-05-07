@@ -1,87 +1,179 @@
 use std::error::Error;
-use std::fs;
 use std::fs::File;
-use std::path::Path;
+use std::io::{stdin, BufReader, BufWriter, Seek};
+use std::path::PathBuf;
 use std::sync::mpsc::{channel, RecvTimeoutError};
 use std::time::Duration;
 
-use clap::{crate_authors, crate_description, crate_name, crate_version, value_t, App, Arg};
+use anyhow::anyhow;
+use clap::{
+    builder::{PathBufValueParser, TypedValueParser},
+    Parser, ValueEnum,
+};
 use csv::Reader;
 #[cfg(unix)]
 use daemonize::Daemonize;
-use log::info;
+use serde_json::Value;
+use tempfile::tempfile;
 
-use crate::{delete, run, Options};
+use crate::{add_ports, delete_ports, UpnpConfig};
 
-const ARG_FILE: &str = "file";
-#[cfg(unix)]
-const ARG_FOREGROUND: &str = "foreground";
-const ARG_ONESHOT: &str = "oneshot";
-const ARG_INTERVAL: &str = "interval";
-const ARG_CLOSE_ON_EXIT: &str = "close-ports-on-exit";
-const ARG_ONLY_CLOSE: &str = "only-close-ports";
-
-fn get_csv_reader<P: AsRef<Path>>(file: P) -> csv::Result<Reader<File>> {
-    return csv::ReaderBuilder::new().delimiter(b';').from_path(&file);
+#[derive(Clone)]
+enum CliInput {
+    File(PathBuf),
+    Stdin,
 }
 
-pub struct Cli;
+impl TryFrom<PathBuf> for CliInput {
+    type Error = std::io::Error;
+
+    fn try_from(path: PathBuf) -> Result<Self, Self::Error> {
+        Ok(if path == PathBuf::from("-") {
+            CliInput::Stdin
+        } else {
+            CliInput::File(path.canonicalize()?)
+        })
+    }
+}
+
+enum Input {
+    File(File),
+    PathBuf(PathBuf),
+}
+
+impl TryFrom<CliInput> for Input {
+    type Error = std::io::Error;
+
+    fn try_from(cli_input: CliInput) -> Result<Self, Self::Error> {
+        Ok(match cli_input {
+            CliInput::File(pathbuf) => Self::PathBuf(pathbuf),
+            CliInput::Stdin => {
+                // Write contents of stdin to temporary file, so we can read it multiple times.
+                let tempfile = tempfile()?;
+                {
+                    let mut reader = BufReader::new(stdin());
+                    let mut writer = BufWriter::new(&tempfile);
+                    std::io::copy(&mut reader, &mut writer)?;
+                }
+                Self::File(tempfile)
+            }
+        })
+    }
+}
+
+fn get_csv_reader(input: &Input, delim: char) -> Result<Reader<File>, std::io::Error> {
+    let mut builder = csv::ReaderBuilder::new();
+    let reader_builder = builder.delimiter(delim as u8);
+
+    Ok(match input {
+        Input::File(file) => {
+            // Clone file handle, so we don't move the original handle away.
+            let mut file = file.try_clone()?;
+
+            // File may have been advanced in previous iteration, so rewind it first.
+            file.rewind()?;
+            reader_builder.from_reader(file)
+        }
+        Input::PathBuf(pathbuf) => reader_builder.from_path(pathbuf)?,
+    })
+}
+
+fn get_configs_from_csv_reader(
+    reader: &mut Reader<File>,
+) -> impl Iterator<Item = anyhow::Result<UpnpConfig>> + '_ {
+    reader
+        .deserialize()
+        .map(|result| result.map_err(anyhow::Error::from))
+}
+
+fn get_configs_from_json(
+    input: &Input,
+) -> anyhow::Result<impl Iterator<Item = anyhow::Result<UpnpConfig>> + '_> {
+    let file = match input {
+        Input::File(file) => {
+            // Clone file handle, so we don't move the original handle away.
+            let mut file = file.try_clone()?;
+
+            // File may have been advanced in previous iteration, so rewind it first.
+            file.rewind()?;
+            file
+        }
+        Input::PathBuf(pathbuf) => File::open(pathbuf)?,
+    };
+
+    let v: Value = serde_json::from_reader(file)?;
+
+    if !v.is_array() {
+        return Err(anyhow!("Input is not a JSON array"));
+    }
+
+    Ok(if let Value::Array(v) = v {
+        v.into_iter()
+            .map(|v| serde_json::from_value::<UpnpConfig>(v).map_err(anyhow::Error::from))
+    } else {
+        unreachable!()
+    })
+}
+
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, ValueEnum)]
+enum CliInputFormat {
+    Csv,
+    Json,
+}
+
+#[derive(Parser)]
+#[clap(author, version, about, long_about = None)]
+pub struct Cli {
+    #[arg(long, short, value_parser = PathBufValueParser::new().try_map(CliInput::try_from))]
+    /// The file (or "-" for stdin) with the port descriptions
+    file: CliInput,
+
+    #[arg(long, value_enum, default_value_t = CliInputFormat::Csv)]
+    /// The format of the configuration file
+    format: CliInputFormat,
+
+    #[arg(long, short = 'd', default_value_t = ';')]
+    /// Field delimiter when using CSV files
+    csv_delimiter: char,
+
+    #[cfg(unix)]
+    #[arg(long, short = 'F')]
+    /// Run in foreground instead of forking to background
+    foreground: bool,
+
+    #[arg(long, short = '1')]
+    /// Run just one time instead of continuously
+    oneshot: bool,
+
+    #[arg(long, short = 'n', default_value_t = 60)]
+    /// Specify update interval in seconds
+    interval: u64,
+
+    #[arg(long)]
+    /// Close specified ports on program exit
+    close_ports_on_exit: bool,
+
+    #[arg(long)]
+    /// Only close specified ports and exit
+    only_close_ports: bool,
+
+    #[cfg(unix)]
+    #[arg(long, default_value = "/tmp/upnp-daemon.pid")]
+    /// Absolute path to PID file for daemon mode
+    pid_file: PathBuf,
+}
 
 impl Cli {
     pub fn run() -> Result<(), Box<dyn Error>> {
-        let arguments = App::new(crate_name!())
-            .version(crate_version!())
-            .author(crate_authors!())
-            .about(crate_description!())
-            .args(&[
-                Arg::with_name(ARG_FILE)
-                    .short(&ARG_FILE[0..1])
-                    .long(ARG_FILE)
-                    .help("The file with the port descriptions, in CSV format")
-                    .required(true)
-                    .takes_value(true)
-                    .number_of_values(1),
-                #[cfg(unix)]
-                Arg::with_name(ARG_FOREGROUND)
-                    .short(&ARG_FOREGROUND[0..1].to_uppercase())
-                    .long(ARG_FOREGROUND)
-                    .help("Run in foreground instead of forking to background"),
-                Arg::with_name(ARG_ONESHOT)
-                    .short("1")
-                    .long(ARG_ONESHOT)
-                    .help("Run just one time instead of continuously"),
-                Arg::with_name(ARG_INTERVAL)
-                    .short("n")
-                    .long(ARG_INTERVAL)
-                    .help("Specify update interval in seconds")
-                    .takes_value(true)
-                    .number_of_values(1),
-                Arg::with_name(ARG_CLOSE_ON_EXIT)
-                    .long(ARG_CLOSE_ON_EXIT)
-                    .help("Close specified ports on program exit"),
-                Arg::with_name(ARG_ONLY_CLOSE)
-                    .long(ARG_ONLY_CLOSE)
-                    .help("Only close specified ports and exit"),
-            ])
-            .get_matches_safe()
-            .unwrap_or_else(|e| e.exit());
+        let cli = Cli::parse();
 
-        let file = fs::canonicalize(arguments.value_of_os(ARG_FILE).unwrap())?;
-        #[cfg(unix)]
-        let foreground = arguments.is_present(ARG_FOREGROUND);
-        let oneshot = arguments.is_present(ARG_ONESHOT);
-        let interval = if arguments.is_present(ARG_INTERVAL) {
-            value_t!(arguments.value_of(ARG_INTERVAL), u64).unwrap_or_else(|e| e.exit())
-        } else {
-            60
-        };
-        let close_on_exit = arguments.is_present(ARG_CLOSE_ON_EXIT);
-        let only_close = arguments.is_present(ARG_ONLY_CLOSE);
+        // Handle file here, because reading from stdin will fail in daemon mode.
+        let file = cli.file.try_into()?;
 
         #[cfg(unix)]
-        if !foreground {
+        if !cli.foreground {
             Daemonize::new()
-                .pid_file(format!("/tmp/{}.pid", crate_name!()))
+                .pid_file(cli.pid_file)
                 .start()
                 .expect("Failed to daemonize.");
         }
@@ -97,21 +189,25 @@ impl Cli {
         }
 
         loop {
-            if !only_close {
-                let mut rdr = get_csv_reader(&file)?;
-
-                for result in rdr.deserialize() {
-                    let options: Options = result?;
-                    info!("Processing: {:?}", options);
-                    run(options)?;
+            if !cli.only_close_ports {
+                match cli.format {
+                    CliInputFormat::Csv => {
+                        let mut rdr = get_csv_reader(&file, cli.csv_delimiter)?;
+                        let configs = get_configs_from_csv_reader(&mut rdr);
+                        add_ports(configs);
+                    }
+                    CliInputFormat::Json => {
+                        let configs = get_configs_from_json(&file)?;
+                        add_ports(configs);
+                    }
                 }
             }
 
-            if oneshot || only_close {
+            if cli.oneshot || cli.only_close_ports {
                 tx_quitter.send(true)?;
             }
 
-            match rx_quitter.recv_timeout(Duration::from_secs(interval)) {
+            match rx_quitter.recv_timeout(Duration::from_secs(cli.interval)) {
                 Err(RecvTimeoutError::Timeout) => {
                     // Timeout reached without being interrupted, continue with loop
                 }
@@ -122,14 +218,17 @@ impl Cli {
                 Ok(_) => {
                     // Quit signal received, break loop and quit nicely
 
-                    if close_on_exit || only_close {
-                        let mut rdr = get_csv_reader(&file)?;
-
-                        // Delete open port mappings
-                        for result in rdr.deserialize() {
-                            let options: Options = result?;
-                            info!("Deleting: {:?}", options);
-                            delete(options);
+                    if cli.close_ports_on_exit || cli.only_close_ports {
+                        match cli.format {
+                            CliInputFormat::Csv => {
+                                let mut rdr = get_csv_reader(&file, cli.csv_delimiter)?;
+                                let configs = get_configs_from_csv_reader(&mut rdr);
+                                delete_ports(configs);
+                            }
+                            CliInputFormat::Json => {
+                                let configs = get_configs_from_json(&file)?;
+                                delete_ports(configs);
+                            }
                         }
                     }
 
@@ -140,4 +239,10 @@ impl Cli {
 
         Ok(())
     }
+}
+
+#[test]
+fn verify_app() {
+    use clap::CommandFactory;
+    Cli::command().debug_assert()
 }
