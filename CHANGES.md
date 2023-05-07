@@ -1,4 +1,4 @@
-# Changes in 0.4.0-RC
+# Changes in 0.4.0
 
 -   Upgrade clap for a better CLI experience
 
