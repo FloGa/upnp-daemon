@@ -702,7 +702,7 @@ dependencies = [
 
 [[package]]
 name = "upnp-daemon"
-version = "0.4.1"
+version = "0.5.0-SNAPSHOT"
 dependencies = [
  "anyhow",
  "cidr-utils",
