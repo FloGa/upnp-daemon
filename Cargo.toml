@@ -1,6 +1,6 @@
 [package]
 name = "upnp-daemon"
-version = "0.4.1-RC"
+version = "0.4.1"
 authors = ["Florian Gamböck <mail@floga.de>"]
 edition = "2021"
 
