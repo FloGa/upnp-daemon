@@ -34,7 +34,7 @@ license = "WTFPL"
 include = ["src/**/*", "LICENSE", "README.md"]
 
 [workspace.dependencies]
-easy-upnp = { version = "0.1.0-SNAPSHOT", path = "easy-upnp" }
+easy-upnp = { version = "0.1.0-SNAPSHOT", path = "crates/easy-upnp" }
 
 anyhow = "1.0.70"
 cidr-utils = { version = "0.5.10", features = ["serde"] }
