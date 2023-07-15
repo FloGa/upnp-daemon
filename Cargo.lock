@@ -228,17 +228,10 @@ version = "0.1.0-SNAPSHOT"
 dependencies = [
  "anyhow",
  "cidr-utils",
- "clap",
- "csv",
- "ctrlc",
- "daemonize",
- "env_logger",
  "get_if_addrs",
  "igd",
  "log",
  "serde",
- "serde_json",
- "tempfile",
 ]
 
 [[package]]
@@ -724,17 +717,12 @@ name = "upnp-daemon"
 version = "0.5.0-SNAPSHOT"
 dependencies = [
  "anyhow",
- "cidr-utils",
  "clap",
  "csv",
  "ctrlc",
  "daemonize",
  "easy-upnp",
  "env_logger",
- "get_if_addrs",
- "igd",
- "log",
- "serde",
  "serde_json",
  "tempfile",
 ]

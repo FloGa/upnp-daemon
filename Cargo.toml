@@ -15,15 +15,10 @@ include.workspace = true
 easy-upnp.workspace = true
 
 anyhow.workspace = true
-cidr-utils.workspace = true
 clap.workspace = true
 csv.workspace = true
 ctrlc.workspace = true
 env_logger.workspace = true
-get_if_addrs.workspace = true
-igd.workspace = true
-log.workspace = true
-serde.workspace = true
 serde_json.workspace = true
 tempfile.workspace = true
 
