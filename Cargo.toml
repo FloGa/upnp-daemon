@@ -4,12 +4,12 @@ version = "0.5.0-SNAPSHOT"
 description = "A daemon for continuously opening ports via UPnP."
 readme = "README.md"
 categories = ["command-line-utilities", "network-programming"]
-include = ["src/**/*", "LICENSE", "README.md"]
 
 authors.workspace = true
 edition.workspace = true
 repository.workspace = true
 license.workspace = true
+include.workspace = true
 
 [dependencies]
 easy-upnp.workspace = true
@@ -35,6 +35,8 @@ authors = ["Florian Gamböck <mail@floga.de>"]
 edition = "2021"
 repository = "https://github.com/FloGa/upnp-daemon"
 license = "WTFPL"
+
+include = ["src/**/*", "LICENSE", "README.md"]
 
 [workspace.dependencies]
 easy-upnp = { version = "0.1.0-SNAPSHOT", path = "easy-upnp" }

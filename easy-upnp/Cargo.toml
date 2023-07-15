@@ -4,12 +4,12 @@ version = "0.1.0-SNAPSHOT"
 description = "The business logic for upnp-daemon."
 readme = "README.md"
 categories = ["network-programming"]
-include = ["src/**/*", "LICENSE", "README.md"]
 
 authors.workspace = true
 edition.workspace = true
 repository.workspace = true
 license.workspace = true
+include.workspace = true
 
 [dependencies]
 anyhow.workspace = true
