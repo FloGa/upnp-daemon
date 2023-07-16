@@ -153,7 +153,7 @@ impl UpnpConfig {
     }
 }
 
-pub fn add_ports(configs: impl Iterator<Item = UpnpConfig>) {
+pub fn add_ports(configs: impl IntoIterator<Item = UpnpConfig>) {
     for config in configs {
         info!("Add port: {:?}", config);
         if let Err(err) = config.add_port() {
@@ -162,7 +162,7 @@ pub fn add_ports(configs: impl Iterator<Item = UpnpConfig>) {
     }
 }
 
-pub fn delete_ports(configs: impl Iterator<Item = UpnpConfig>) {
+pub fn delete_ports(configs: impl IntoIterator<Item = UpnpConfig>) {
     for config in configs {
         info!("Remove port: {:?}", config);
         config.remove_port();
