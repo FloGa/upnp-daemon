@@ -2,6 +2,8 @@
 //!
 //! The business logic for upnp-daemon.
 
+#![deny(missing_docs)]
+
 use std::error::Error;
 use std::net::{IpAddr, SocketAddr, SocketAddrV4};
 
