@@ -1,3 +1,7 @@
+//! # easy-upnp
+//!
+//! The business logic for upnp-daemon.
+
 use std::error::Error;
 use std::net::{IpAddr, SocketAddr, SocketAddrV4};
 
