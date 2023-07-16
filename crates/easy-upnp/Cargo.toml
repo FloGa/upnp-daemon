@@ -1,0 +1,19 @@
+[package]
+name = "easy-upnp"
+version = "0.1.0-SNAPSHOT"
+description = "The business logic for upnp-daemon."
+readme = "README.md"
+categories = ["network-programming"]
+
+authors.workspace = true
+edition.workspace = true
+repository.workspace = true
+license.workspace = true
+include.workspace = true
+
+[dependencies]
+cidr-utils.workspace = true
+get_if_addrs.workspace = true
+igd.workspace = true
+log.workspace = true
+serde.workspace = true

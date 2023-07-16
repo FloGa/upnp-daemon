@@ -1,22 +1,48 @@
 [package]
 name = "upnp-daemon"
 version = "0.5.0-SNAPSHOT"
-authors = ["Florian Gamböck <mail@floga.de>"]
-edition = "2021"
-
 description = "A daemon for continuously opening ports via UPnP."
-repository = "https://github.com/FloGa/upnp-daemon"
 readme = "README.md"
-categories = ["network-programming"]
-license = "WTFPL"
-include = ["src/**/*", "LICENSE", "README.md"]
+categories = ["command-line-utilities", "network-programming"]
+
+authors.workspace = true
+edition.workspace = true
+repository.workspace = true
+license.workspace = true
+include.workspace = true
 
 [dependencies]
+easy-upnp.workspace = true
+
+anyhow.workspace = true
+clap.workspace = true
+csv.workspace = true
+ctrlc.workspace = true
+env_logger.workspace = true
+log.workspace = true
+serde_json.workspace = true
+tempfile.workspace = true
+
+[target.'cfg(unix)'.dependencies]
+daemonize.workspace = true
+
+[workspace.package]
+authors = ["Florian Gamböck <mail@floga.de>"]
+edition = "2021"
+repository = "https://github.com/FloGa/upnp-daemon"
+license = "WTFPL"
+
+include = ["src/**/*", "LICENSE", "README.md"]
+
+[workspace.dependencies]
+easy-upnp = { version = "0.1.0-SNAPSHOT", path = "crates/easy-upnp" }
+
 anyhow = "1.0.70"
 cidr-utils = { version = "0.5.10", features = ["serde"] }
 clap = { version = "4.2.4", features = ["derive"] }
 csv = "1.1"
 ctrlc = { version = "3.0", features = ["termination"] }
+daemonize = "0.5.0"
 env_logger = "0.10.0"
 get_if_addrs = "0.5.3"
 igd = "0.12.0"
@@ -24,6 +50,3 @@ log = "0.4.11"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1.0.96"
 tempfile = "3.5.0"
-
-[target.'cfg(unix)'.dependencies]
-daemonize = "0.5.0"
