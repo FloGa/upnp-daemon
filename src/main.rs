@@ -469,42 +469,42 @@ enum CliInputFormat {
 #[derive(Parser)]
 #[clap(author, version, about, long_about = None)]
 pub struct Cli {
-    #[arg(long, short, value_parser = PathBufValueParser::new().try_map(CliInput::try_from))]
     /// The file (or "-" for stdin) with the port descriptions
+    #[arg(long, short, value_parser = PathBufValueParser::new().try_map(CliInput::try_from))]
     file: CliInput,
 
-    #[arg(long, value_enum, default_value_t = CliInputFormat::Csv)]
     /// The format of the configuration file
+    #[arg(long, value_enum, default_value_t = CliInputFormat::Csv)]
     format: CliInputFormat,
 
-    #[arg(long, short = 'd', default_value_t = ';')]
     /// Field delimiter when using CSV files
+    #[arg(long, short = 'd', default_value_t = ';')]
     csv_delimiter: char,
 
+    /// Run in foreground instead of forking to background
     #[cfg(unix)]
     #[arg(long, short = 'F')]
-    /// Run in foreground instead of forking to background
     foreground: bool,
 
-    #[arg(long, short = '1')]
     /// Run just one time instead of continuously
+    #[arg(long, short = '1')]
     oneshot: bool,
 
-    #[arg(long, short = 'n', default_value_t = 60)]
     /// Specify update interval in seconds
+    #[arg(long, short = 'n', default_value_t = 60)]
     interval: u64,
 
-    #[arg(long)]
     /// Close specified ports on program exit
+    #[arg(long)]
     close_ports_on_exit: bool,
 
-    #[arg(long)]
     /// Only close specified ports and exit
+    #[arg(long)]
     only_close_ports: bool,
 
+    /// Absolute path to PID file for daemon mode
     #[cfg(unix)]
     #[arg(long, default_value = "/tmp/upnp-daemon.pid")]
-    /// Absolute path to PID file for daemon mode
     pid_file: PathBuf,
 }
 
