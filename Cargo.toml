@@ -19,6 +19,7 @@ clap.workspace = true
 csv.workspace = true
 ctrlc.workspace = true
 env_logger.workspace = true
+log.workspace = true
 serde_json.workspace = true
 tempfile.workspace = true
 

@@ -348,6 +348,7 @@ use clap::{
 use csv::Reader;
 #[cfg(unix)]
 use daemonize::Daemonize;
+use log::error;
 use serde_json::Value;
 use tempfile::tempfile;
 
@@ -450,6 +451,15 @@ fn get_configs_from_json(
     })
 }
 
+fn filter_out_and_log_errors(result: anyhow::Result<UpnpConfig>) -> Option<UpnpConfig> {
+    result
+        .map_err(|err| {
+            error!("{}", err);
+            err
+        })
+        .ok()
+}
+
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, ValueEnum)]
 enum CliInputFormat {
     Csv,
@@ -528,11 +538,13 @@ impl Cli {
                 match cli.format {
                     CliInputFormat::Csv => {
                         let mut rdr = get_csv_reader(&file, cli.csv_delimiter)?;
-                        let configs = get_configs_from_csv_reader(&mut rdr);
+                        let configs = get_configs_from_csv_reader(&mut rdr)
+                            .filter_map(filter_out_and_log_errors);
                         add_ports(configs);
                     }
                     CliInputFormat::Json => {
-                        let configs = get_configs_from_json(&file)?;
+                        let configs =
+                            get_configs_from_json(&file)?.filter_map(filter_out_and_log_errors);
                         add_ports(configs);
                     }
                 }
@@ -557,11 +569,13 @@ impl Cli {
                         match cli.format {
                             CliInputFormat::Csv => {
                                 let mut rdr = get_csv_reader(&file, cli.csv_delimiter)?;
-                                let configs = get_configs_from_csv_reader(&mut rdr);
+                                let configs = get_configs_from_csv_reader(&mut rdr)
+                                    .filter_map(filter_out_and_log_errors);
                                 delete_ports(configs);
                             }
                             CliInputFormat::Json => {
-                                let configs = get_configs_from_json(&file)?;
+                                let configs = get_configs_from_json(&file)?
+                                    .filter_map(filter_out_and_log_errors);
                                 delete_ports(configs);
                             }
                         }

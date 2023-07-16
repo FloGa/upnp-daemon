@@ -12,7 +12,6 @@ license.workspace = true
 include.workspace = true
 
 [dependencies]
-anyhow.workspace = true
 cidr-utils.workspace = true
 get_if_addrs.workspace = true
 igd.workspace = true

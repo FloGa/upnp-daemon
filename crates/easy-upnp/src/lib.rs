@@ -153,32 +153,18 @@ impl UpnpConfig {
     }
 }
 
-pub fn add_ports(configs: impl Iterator<Item = anyhow::Result<UpnpConfig>>) {
+pub fn add_ports(configs: impl Iterator<Item = UpnpConfig>) {
     for config in configs {
-        match config {
-            Ok(config) => {
-                info!("Add port: {:?}", config);
-                if let Err(err) = config.add_port() {
-                    error!("{}", err);
-                }
-            }
-            Err(err) => {
-                error!("{}", err);
-            }
+        info!("Add port: {:?}", config);
+        if let Err(err) = config.add_port() {
+            error!("{}", err);
         }
     }
 }
 
-pub fn delete_ports(configs: impl Iterator<Item = anyhow::Result<UpnpConfig>>) {
+pub fn delete_ports(configs: impl Iterator<Item = UpnpConfig>) {
     for config in configs {
-        match config {
-            Ok(config) => {
-                info!("Remove port: {:?}", config);
-                config.remove_port();
-            }
-            Err(err) => {
-                error!("{}", err);
-            }
-        }
+        info!("Remove port: {:?}", config);
+        config.remove_port();
     }
 }

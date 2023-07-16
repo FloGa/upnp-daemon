@@ -226,7 +226,6 @@ checksum = "f578e8e2c440e7297e008bb5486a3a8a194775224bbc23729b0dbdfaeebf162e"
 name = "easy-upnp"
 version = "0.1.0-SNAPSHOT"
 dependencies = [
- "anyhow",
  "cidr-utils",
  "get_if_addrs",
  "igd",
@@ -723,6 +722,7 @@ dependencies = [
  "daemonize",
  "easy-upnp",
  "env_logger",
+ "log",
  "serde_json",
  "tempfile",
 ]
