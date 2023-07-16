@@ -468,7 +468,7 @@ enum CliInputFormat {
 
 #[derive(Parser)]
 #[clap(author, version, about, long_about = None)]
-pub struct Cli {
+struct Cli {
     /// The file (or "-" for stdin) with the port descriptions
     #[arg(long, short, value_parser = PathBufValueParser::new().try_map(CliInput::try_from))]
     file: CliInput,
@@ -509,7 +509,7 @@ pub struct Cli {
 }
 
 impl Cli {
-    pub fn run() -> Result<(), Box<dyn Error>> {
+    fn run() -> Result<(), Box<dyn Error>> {
         let cli = Cli::parse();
 
         // Handle file here, because reading from stdin will fail in daemon mode.
