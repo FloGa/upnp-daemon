@@ -1,6 +1,82 @@
 //! # easy-upnp
 //!
-//! The business logic for upnp-daemon.
+//! [![badge github]][url github]
+//! [![badge crates.io]][url crates.io]
+//! [![badge docs.rs]][url docs.rs]
+//! [![badge license]][url license]
+//!
+//! [badge github]: https://img.shields.io/badge/github-FloGa%2Fupnp--daemon-green
+//! [badge crates.io]: https://img.shields.io/crates/v/easy-upnp
+//! [badge docs.rs]: https://img.shields.io/docsrs/easy-upnp
+//! [badge license]: https://img.shields.io/crates/l/easy-upnp
+//!
+//! [url github]: https://github.com/FloGa/upnp-daemon/crates/easy-upnp
+//! [url crates.io]: https://crates.io/crates/easy-upnp
+//! [url docs.rs]: https://docs.rs/easy-upnp
+//! [url license]:
+//! https://github.com/FloGa/upnp-daemon/blob/develop/crates/easy-upnp/LICENSE
+//!
+//! A minimalistic wrapper around [IGD] to open and close network ports via
+//! [UPnP]. Mainly this library is used in the CLI application [`upnp-daemon`],
+//! but it can also be used as a library in other crates that just want to open
+//! and close ports with minimal possible configuration.
+//!
+//! [IGD]: https://docs.rs/igd/
+//! [UPnP]: https://en.wikipedia.org/wiki/Universal_Plug_and_Play
+//! [`upnp-daemon`]: https://github.com/FloGa/upnp-daemon
+//!
+//! ## Example
+//!
+//! Here is a hands-on example to demonstrate the usage. It will add some ports and immediately remove them again.
+//!
+//! ```rust no_run
+//! use std::error::Error;
+//!
+//! use cidr_utils::cidr::Ipv4Cidr;
+//! use easy_upnp::{add_ports, delete_ports, PortMappingProtocol, UpnpConfig};
+//!
+//! fn get_configs() -> Result<[UpnpConfig; 3], Box<dyn Error>> {
+//!     let config_no_address = UpnpConfig {
+//!         address: None,
+//!         port: 80,
+//!         protocol: PortMappingProtocol::TCP,
+//!         duration: 3600,
+//!         comment: "Webserver".to_string(),
+//!     };
+//!
+//!     let config_specific_address = UpnpConfig {
+//!         address: Some(Ipv4Cidr::from_str("192.168.0.10/24")?),
+//!         port: 8080,
+//!         protocol: PortMappingProtocol::TCP,
+//!         duration: 3600,
+//!         comment: "Webserver alternative".to_string(),
+//!     };
+//!
+//!     let config_address_range = UpnpConfig {
+//!         address: Some(Ipv4Cidr::from_str("192.168.0")?),
+//!         port: 8081,
+//!         protocol: PortMappingProtocol::TCP,
+//!         duration: 3600,
+//!         comment: "Webserver second alternative".to_string(),
+//!     };
+//!
+//!     Ok([
+//!         config_no_address,
+//!         config_specific_address,
+//!         config_address_range,
+//!     ])
+//! }
+//!
+//! fn main() -> Result<(), Box<dyn Error>> {
+//!     add_ports(get_configs()?);
+//!
+//!     delete_ports(get_configs()?);
+//!
+//!     Ok(())
+//! }
+//! ```
+
+#![deny(missing_docs)]
 
 use std::error::Error;
 use std::net::{IpAddr, SocketAddr, SocketAddrV4};
@@ -10,6 +86,9 @@ use igd::{AddPortError, Gateway, SearchOptions};
 use log::{debug, error, info, warn};
 use serde::Deserialize;
 
+/// The protocol for which the given port will be opened. Possible values are
+/// [`UDP`](PortMappingProtocol::UDP) and [`TCP`](PortMappingProtocol::TCP).
+#[allow(missing_docs)]
 #[derive(Clone, Copy, Debug, Deserialize)]
 pub enum PortMappingProtocol {
     TCP,
@@ -109,12 +188,79 @@ fn get_gateway_and_address_from_options(
     }
 }
 
+/// This struct defines a configuration for a port mapping.
+///
+/// The configuration consists of all necessary pieces of information for a proper port opening.
+///
+/// # Examples
+///
+/// ```
+/// use cidr_utils::cidr::Ipv4Cidr;
+///
+/// use easy_upnp::{PortMappingProtocol, UpnpConfig};
+///
+/// # fn main() -> Result<(), Box<dyn std::error::Error>> {
+/// let config_no_address = UpnpConfig {
+///     address: None,
+///     port: 80,
+///     protocol: PortMappingProtocol::TCP,
+///     duration: 3600,
+///     comment: "Webserver".to_string(),
+/// };
+///
+/// let config_specific_address = UpnpConfig {
+///     address: Some(Ipv4Cidr::from_str("192.168.0.10/24")?),
+///     port: 80,
+///     protocol: PortMappingProtocol::TCP,
+///     duration: 3600,
+///     comment: "Webserver".to_string(),
+/// };
+///
+/// let config_address_range = UpnpConfig {
+///     address: Some(Ipv4Cidr::from_str("192.168.0")?),
+///     port: 80,
+///     protocol: PortMappingProtocol::TCP,
+///     duration: 3600,
+///     comment: "Webserver".to_string(),
+/// };
+/// #
+/// # Ok(())
+/// # }
+/// ```
 #[derive(Debug, Deserialize)]
 pub struct UpnpConfig {
+    /// The IP address for which the port mapping should be added.
+    ///
+    /// This field can be [None], in which case every connected interface will be tried, until one
+    /// gateway reports success. Useful if the IP address is dynamic and not consistent over
+    /// reboots.
+    ///
+    /// Fill in an IP address if you want to add a port mapping for a foreign device, or if you
+    /// know your machine's address and want to slightly speed up the process.
+    ///
+    /// For examples how to specify IP addresses, check the documentation of [Ipv4Cidr].
     pub address: Option<Ipv4Cidr>,
+
+    /// The port number to open for the given IP address.
+    ///
+    /// Note that we are greedy at the moment, if a port mapping is already in place, it will be
+    /// deleted and re-added with the given IP address. This might be configurable in a future
+    /// release.
     pub port: u16,
+
+    /// The protocol for which the given port will be opened. Possible values are
+    /// [`UDP`](PortMappingProtocol::UDP) and [`TCP`](PortMappingProtocol::TCP).
     pub protocol: PortMappingProtocol,
+
+    /// The lease duration for the port mapping in seconds.
+    ///
+    /// Please note that some UPnP capable routers might choose to ignore this value, so do not
+    /// exclusively rely on this.
     pub duration: u32,
+
+    /// A comment about the reason for the port mapping.
+    ///
+    /// Will be stored together with the mapping in the router.
     pub comment: String,
 }
 
@@ -157,6 +303,28 @@ impl UpnpConfig {
     }
 }
 
+/// Add port mappings.
+///
+/// This function takes an iterable of [UpnpConfig]s and opens all configures ports.
+///
+/// Errors are logged, but otherwise ignored. An error during opening a port will not stop the
+/// processing of the other ports.
+///
+/// # Example
+///
+/// ```no_run
+/// use easy_upnp::{add_ports, PortMappingProtocol, UpnpConfig};
+///
+/// let config = UpnpConfig {
+///     address: None,
+///     port: 80,
+///     protocol: PortMappingProtocol::TCP,
+///     duration: 3600,
+///     comment: "Webserver".to_string(),
+/// };
+///
+/// add_ports([config]);
+/// ```
 pub fn add_ports(configs: impl IntoIterator<Item = UpnpConfig>) {
     for config in configs {
         info!("Add port: {:?}", config);
@@ -166,6 +334,28 @@ pub fn add_ports(configs: impl IntoIterator<Item = UpnpConfig>) {
     }
 }
 
+/// Delete port mappings.
+///
+/// This function takes an iterable of [UpnpConfig]s and closes all configures ports.
+///
+/// Errors are logged, but otherwise ignored. An error during closing a port will not stop the
+/// processing of the other ports.
+///
+/// # Example
+///
+/// ```no_run
+/// use easy_upnp::{delete_ports, PortMappingProtocol, UpnpConfig};
+///
+/// let config = UpnpConfig {
+///     address: None,
+///     port: 80,
+///     protocol: PortMappingProtocol::TCP,
+///     duration: 3600,
+///     comment: "Webserver".to_string(),
+/// };
+///
+/// delete_ports([config]);
+/// ```
 pub fn delete_ports(configs: impl IntoIterator<Item = UpnpConfig>) {
     for config in configs {
         info!("Remove port: {:?}", config);
