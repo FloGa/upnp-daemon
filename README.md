@@ -310,7 +310,7 @@ to specify a JSON array.
     `192.168.0`.
 
     More examples can be found in the responsible library's documentation:
-    https://docs.rs/cidr-utils/0.5.10/cidr_utils/index.html
+    <https://docs.rs/cidr-utils/0.5.10/cidr_utils/index.html>
 
 -   port
 
