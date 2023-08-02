@@ -26,6 +26,11 @@ tempfile.workspace = true
 [target.'cfg(unix)'.dependencies]
 daemonize.workspace = true
 
+[dev-dependencies]
+assert_cmd.workspace = true
+lazy_static.workspace = true
+predicates.workspace = true
+
 [workspace.package]
 authors = ["Florian Gamböck <mail@floga.de>"]
 edition = "2021"
@@ -50,3 +55,7 @@ log = "0.4.11"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1.0.96"
 tempfile = "3.5.0"
+
+assert_cmd = "2.0.11"
+lazy_static = "1.4.0"
+predicates = "*" # resolve via assert_cmd
