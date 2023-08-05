@@ -31,6 +31,8 @@ assert_cmd.workspace = true
 lazy_static.workspace = true
 predicates.workspace = true
 
+# --- Workspace configuration ---
+
 [workspace.package]
 authors = ["Florian Gamböck <mail@floga.de>"]
 edition = "2021"
@@ -40,7 +42,12 @@ license = "WTFPL"
 include = ["src/**/*", "LICENSE", "README.md"]
 
 [workspace.dependencies]
+
+# Internal dependencies
+
 easy-upnp = { version = "0.1.0-SNAPSHOT", path = "crates/easy-upnp" }
+
+# Runtime dependencies
 
 anyhow = "1.0.70"
 cidr-utils = { version = "0.5.10", features = ["serde"] }
@@ -55,6 +62,8 @@ log = "0.4.11"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1.0.96"
 tempfile = "3.5.0"
+
+# Development / test dependencies
 
 assert_cmd = "2.0.11"
 lazy_static = "1.4.0"
