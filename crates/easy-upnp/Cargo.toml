@@ -1,6 +1,6 @@
 [package]
 name = "easy-upnp"
-version = "0.1.0-SNAPSHOT"
+version = "0.1.0-RC"
 description = "The business logic for upnp-daemon."
 readme = "README.md"
 categories = ["network-programming"]
