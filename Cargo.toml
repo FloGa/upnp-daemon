@@ -1,6 +1,6 @@
 [package]
 name = "upnp-daemon"
-version = "0.5.0-RC"
+version = "0.5.0"
 description = "A daemon for continuously opening ports via UPnP."
 readme = "README.md"
 categories = ["command-line-utilities", "network-programming"]
@@ -45,7 +45,7 @@ include = ["src/**/*", "LICENSE", "README.md"]
 
 # Internal dependencies
 
-easy-upnp = { version = "0.1.0-RC", path = "crates/easy-upnp" }
+easy-upnp = { version = "0.1.0", path = "crates/easy-upnp" }
 
 # Runtime dependencies
 
