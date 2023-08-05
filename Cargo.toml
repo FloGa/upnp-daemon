@@ -1,6 +1,6 @@
 [package]
 name = "upnp-daemon"
-version = "0.5.1-RC"
+version = "0.5.1"
 description = "A daemon for continuously opening ports via UPnP."
 readme = "README.md"
 categories = ["command-line-utilities", "network-programming"]
