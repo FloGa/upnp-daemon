@@ -1,6 +1,6 @@
 [package]
 name = "upnp-daemon"
-version = "0.6.0-SNAPSHOT"
+version = "0.5.1"
 description = "A daemon for continuously opening ports via UPnP."
 readme = "README.md"
 categories = ["command-line-utilities", "network-programming"]
@@ -67,4 +67,4 @@ tempfile = "3.5.0"
 
 assert_cmd = "2.0.11"
 lazy_static = "1.4.0"
-predicates = "*" # resolve via assert_cmd
+predicates = "3.0.1" # sync with assert_cmd
