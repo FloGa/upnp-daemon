@@ -1,4 +1,15 @@
-# Changes since latest release
+# Changes in 0.5.0
+
+-   Split application and lib into workspaces
+
+-   Don't use Result as parameter
+
+    In the lib it does not make sense to do error handling from the CLI.
+    This should happen in the CLI module.
+
+-   Use IntoIterator to be more flexible
+
+-   Add some integration tests
 
 # Changes in 0.4.1
 
