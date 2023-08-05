@@ -1,5 +1,7 @@
 # Changes in 0.5.1-RC
 
+-   Use proper version for predicates
+
 # Changes in 0.5.0
 
 -   Split application and lib into workspaces
