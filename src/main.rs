@@ -598,8 +598,13 @@ fn main() -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-#[test]
-fn verify_app() {
-    use clap::CommandFactory;
-    Cli::command().debug_assert()
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn verify_app() {
+        use clap::CommandFactory;
+        Cli::command().debug_assert()
+    }
 }
