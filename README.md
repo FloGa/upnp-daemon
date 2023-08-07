@@ -2,17 +2,14 @@
 
 [![badge github]][url github]
 [![badge crates.io]][url crates.io]
-[![badge docs.rs]][url docs.rs]
 [![badge license]][url license]
 
 [badge github]: https://img.shields.io/badge/github-FloGa%2Fupnp--daemon-green
 [badge crates.io]: https://img.shields.io/crates/v/upnp-daemon
-[badge docs.rs]: https://img.shields.io/docsrs/upnp-daemon
 [badge license]: https://img.shields.io/crates/l/upnp-daemon
 
 [url github]: https://github.com/FloGa/upnp-daemon
 [url crates.io]: https://crates.io/crates/upnp-daemon
-[url docs.rs]: https://docs.rs/upnp-daemon
 [url license]: https://github.com/FloGa/upnp-daemon/blob/develop/LICENSE
 
 A daemon for continuously opening ports via UPnP.
