@@ -16,6 +16,8 @@
 //! [url license]:
 //! https://github.com/FloGa/upnp-daemon/blob/develop/crates/easy-upnp/LICENSE
 //!
+//! Easily open and close UPnP ports.
+//!
 //! A minimalistic wrapper around [IGD] to open and close network ports via
 //! [UPnP]. Mainly this library is used in the CLI application [`upnp-daemon`],
 //! but it can also be used as a library in other crates that just want to open
@@ -27,7 +29,8 @@
 //!
 //! ## Example
 //!
-//! Here is a hands-on example to demonstrate the usage. It will add some ports and immediately remove them again.
+//! Here is a hands-on example to demonstrate the usage. It will add some ports
+//! and immediately remove them again.
 //!
 //! ```rust no_run
 //! use std::error::Error;
