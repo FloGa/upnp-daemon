@@ -29,7 +29,8 @@ and close ports with minimal possible configuration.
 
 ## Example
 
-Here is a hands-on example to demonstrate the usage. It will add some ports and immediately remove them again.
+Here is a hands-on example to demonstrate the usage. It will add some ports
+and immediately remove them again.
 
 ```rust no_run
 use std::error::Error;
