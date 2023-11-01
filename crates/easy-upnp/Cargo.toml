@@ -1,6 +1,6 @@
 [package]
 name = "easy-upnp"
-version = "0.1.0"
+version = "0.1.1-RC"
 description = "Easily open and close UPnP ports."
 readme = "README.md"
 categories = ["network-programming"]

@@ -1,3 +1,5 @@
+# Changes in 0.5.2-RC
+
 # Changes in 0.5.1
 
 -   Use proper version for predicates
