@@ -1,5 +1,9 @@
 # Changes since latest release
 
+# Changes in 0.5.2
+
+-   Update dependencies for security fixes
+
 # Changes in 0.5.1
 
 -   Use proper version for predicates
