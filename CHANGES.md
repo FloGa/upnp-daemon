@@ -1,4 +1,4 @@
-# Changes in 0.5.2-RC
+# Changes in 0.5.2
 
 -   Update dependencies for security fixes
 
