@@ -93,8 +93,17 @@ use thiserror::Error;
 #[allow(missing_docs)]
 #[derive(Debug, Error)]
 pub enum Error {
-    #[error(transparent)]
+    #[error("No matching gateway found")]
+    NoMatchingGateway,
+
+    #[error("Could not get interface address: {0}")]
+    CannotGetInterfaceAddress(#[source] std::io::Error),
+
+    #[error("Error adding port: {0}")]
     IgdAddPortError(#[from] igd::AddPortError),
+
+    #[error("Error searching for gateway: {0}")]
+    IgdSearchError(#[from] igd::SearchError),
 }
 
 type Result<R> = std::result::Result<R, Error>;
@@ -117,17 +126,18 @@ impl From<PortMappingProtocol> for igd::PortMappingProtocol {
     }
 }
 
-fn find_gateway_with_bind_addr(bind_addr: SocketAddr) -> Gateway {
+fn find_gateway_with_bind_addr(bind_addr: SocketAddr) -> Result<Gateway> {
     let options = SearchOptions {
         bind_addr,
         ..Default::default()
     };
-    igd::search_gateway(options).unwrap()
+    Ok(igd::search_gateway(options)?)
 }
 
-fn find_gateway_and_addr(cidr: &Option<Ipv4Cidr>) -> (Gateway, SocketAddr) {
-    let ifaces = get_if_addrs::get_if_addrs().unwrap();
-    ifaces
+fn find_gateway_and_addr(cidr: &Option<Ipv4Cidr>) -> Result<(Gateway, SocketAddr)> {
+    let ifaces = get_if_addrs::get_if_addrs().map_err(Error::CannotGetInterfaceAddress)?;
+
+    let (gateway, address) = ifaces
         .iter()
         .filter_map(|iface| {
             if iface.is_loopback() || !iface.ip().is_ipv4() {
@@ -149,12 +159,13 @@ fn find_gateway_and_addr(cidr: &Option<Ipv4Cidr>) -> (Gateway, SocketAddr) {
                     }
                     _ => {
                         let options = SearchOptions {
+                            // Unwrap is okay here, IP is correctly generated
                             bind_addr: format!("{}:0", iface.addr.ip()).parse().unwrap(),
                             ..Default::default()
                         };
                         igd::search_gateway(options).ok().and_then(|gateway| {
                             if let get_if_addrs::IfAddr::V4(addr) = &iface.addr {
-                                Some((gateway, SocketAddr::V4(SocketAddrV4::new(addr.ip, 0))))
+                                Some((Ok(gateway), SocketAddr::V4(SocketAddrV4::new(addr.ip, 0))))
                             } else {
                                 // Anything other than V4 has been ruled out by the first if
                                 // condition.
@@ -166,18 +177,20 @@ fn find_gateway_and_addr(cidr: &Option<Ipv4Cidr>) -> (Gateway, SocketAddr) {
             }
         })
         .next()
-        .unwrap()
+        .ok_or_else(|| Error::NoMatchingGateway)?;
+
+    Ok((gateway?, address))
 }
 
 fn get_gateway_and_address_from_options(
     address: &Option<Ipv4Cidr>,
     port: u16,
-) -> (Gateway, SocketAddrV4) {
-    match address {
+) -> Result<(Gateway, SocketAddrV4)> {
+    Ok(match address {
         Some(addr) if addr.get_bits() == 32 => {
             let addr = SocketAddr::new(IpAddr::V4(addr.get_prefix_as_ipv4_addr()), port);
 
-            let gateway = find_gateway_with_bind_addr(addr);
+            let gateway = find_gateway_with_bind_addr(addr)?;
 
             let addr = match addr {
                 SocketAddr::V4(addr) => addr,
@@ -188,7 +201,7 @@ fn get_gateway_and_address_from_options(
         }
 
         _ => {
-            let (gateway, mut addr) = find_gateway_and_addr(address);
+            let (gateway, mut addr) = find_gateway_and_addr(address)?;
             addr.set_port(port);
 
             let addr = match addr {
@@ -198,7 +211,7 @@ fn get_gateway_and_address_from_options(
 
             (gateway, addr)
         }
-    }
+    })
 }
 
 /// This struct defines a configuration for a port mapping.
@@ -278,11 +291,11 @@ pub struct UpnpConfig {
 }
 
 impl UpnpConfig {
-    fn remove_port(&self) {
+    fn remove_port(&self) -> Result<()> {
         let port = self.port;
         let protocol = self.protocol.into();
 
-        let (gateway, _) = get_gateway_and_address_from_options(&self.address, port);
+        let (gateway, _) = get_gateway_and_address_from_options(&self.address, port)?;
 
         gateway.remove_port(protocol, port).unwrap_or_else(|e| {
             warn!(
@@ -291,6 +304,8 @@ impl UpnpConfig {
             );
             warn!("{}", e);
         });
+
+        Ok(())
     }
 
     fn add_port(&self) -> Result<()> {
@@ -299,7 +314,7 @@ impl UpnpConfig {
         let duration = self.duration;
         let comment = &self.comment;
 
-        let (gateway, addr) = get_gateway_and_address_from_options(&self.address, port);
+        let (gateway, addr) = get_gateway_and_address_from_options(&self.address, port)?;
 
         let f = || gateway.add_port(protocol, port, addr, duration, comment);
         f().or_else(|e| match e {
@@ -372,6 +387,8 @@ pub fn add_ports(configs: impl IntoIterator<Item = UpnpConfig>) {
 pub fn delete_ports(configs: impl IntoIterator<Item = UpnpConfig>) {
     for config in configs {
         info!("Remove port: {:?}", config);
-        config.remove_port();
+        if let Err(err) = config.remove_port() {
+            error!("{}", err);
+        }
     }
 }
