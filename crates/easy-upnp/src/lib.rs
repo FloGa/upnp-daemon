@@ -81,13 +81,23 @@
 
 #![deny(missing_docs)]
 
-use std::error::Error;
 use std::net::{IpAddr, SocketAddr, SocketAddrV4};
 
 use cidr_utils::cidr::Ipv4Cidr;
-use igd::{AddPortError, Gateway, SearchOptions};
+use igd::{Gateway, SearchOptions};
 use log::{debug, error, info, warn};
 use serde::Deserialize;
+use thiserror::Error;
+
+/// Convenience wrapper over all possible Errors
+#[allow(missing_docs)]
+#[derive(Debug, Error)]
+pub enum Error {
+    #[error(transparent)]
+    IgdAddPortError(#[from] igd::AddPortError),
+}
+
+type Result<R> = std::result::Result<R, Error>;
 
 /// The protocol for which the given port will be opened. Possible values are
 /// [`UDP`](PortMappingProtocol::UDP) and [`TCP`](PortMappingProtocol::TCP).
@@ -283,7 +293,7 @@ impl UpnpConfig {
         });
     }
 
-    fn add_port(&self) -> Result<(), Box<dyn Error>> {
+    fn add_port(&self) -> Result<()> {
         let port = self.port;
         let protocol = self.protocol.into();
         let duration = self.duration;
@@ -293,7 +303,7 @@ impl UpnpConfig {
 
         let f = || gateway.add_port(protocol, port, addr, duration, comment);
         f().or_else(|e| match e {
-            AddPortError::PortInUse => {
+            igd::AddPortError::PortInUse => {
                 debug!("Port already in use. Delete mapping.");
                 gateway.remove_port(protocol, port).unwrap();
                 debug!("Retry port mapping.");
