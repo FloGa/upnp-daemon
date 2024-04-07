@@ -35,8 +35,7 @@
 //! ```rust no_run
 //! use std::error::Error;
 //! use log::error;
-//! use cidr_utils::cidr::Ipv4Cidr;
-//! use easy_upnp::{add_ports, delete_ports, PortMappingProtocol, UpnpConfig};
+//! use easy_upnp::{add_ports, delete_ports, Ipv4Cidr, PortMappingProtocol, UpnpConfig};
 //!
 //! fn get_configs() -> Result<[UpnpConfig; 3], Box<dyn Error>> {
 //!     let config_no_address = UpnpConfig {
@@ -91,7 +90,7 @@
 
 use std::net::{IpAddr, SocketAddr, SocketAddrV4};
 
-use cidr_utils::cidr::Ipv4Cidr;
+pub use cidr_utils::cidr::Ipv4Cidr;
 use igd::{Gateway, SearchOptions};
 use log::{debug, error, info, warn};
 use serde::Deserialize;
@@ -229,9 +228,7 @@ fn get_gateway_and_address_from_options(
 /// # Examples
 ///
 /// ```
-/// use cidr_utils::cidr::Ipv4Cidr;
-///
-/// use easy_upnp::{PortMappingProtocol, UpnpConfig};
+/// use easy_upnp::{Ipv4Cidr, PortMappingProtocol, UpnpConfig};
 ///
 /// # fn main() -> Result<(), Box<dyn std::error::Error>> {
 /// let config_no_address = UpnpConfig {
