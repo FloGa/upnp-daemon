@@ -29,13 +29,13 @@ and close ports with minimal possible configuration.
 
 ## Example
 
-Here is a hands-on example to demonstrate the usage. It will add some ports and immediately remove them again.
+Here is a hands-on example to demonstrate the usage. It will add some ports
+and immediately remove them again.
 
 ```rust no_run
 use std::error::Error;
-
-use cidr_utils::cidr::Ipv4Cidr;
-use easy_upnp::{add_ports, delete_ports, PortMappingProtocol, UpnpConfig};
+use log::error;
+use easy_upnp::{add_ports, delete_ports, Ipv4Cidr, PortMappingProtocol, UpnpConfig};
 
 fn get_configs() -> Result<[UpnpConfig; 3], Box<dyn Error>> {
     let config_no_address = UpnpConfig {
@@ -70,9 +70,17 @@ fn get_configs() -> Result<[UpnpConfig; 3], Box<dyn Error>> {
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
-    add_ports(get_configs()?);
+    for result in add_ports(get_configs()?) {
+        if let Err(err) = result {
+            error!("{}", err);
+        }
+    }
 
-    delete_ports(get_configs()?);
+    for result in delete_ports(get_configs()?) {
+        if let Err(err) = result {
+            error!("{}", err);
+        }
+    }
 
     Ok(())
 }

@@ -2,17 +2,14 @@
 //!
 //! [![badge github]][url github]
 //! [![badge crates.io]][url crates.io]
-//! [![badge docs.rs]][url docs.rs]
 //! [![badge license]][url license]
 //!
 //! [badge github]: https://img.shields.io/badge/github-FloGa%2Fupnp--daemon-green
 //! [badge crates.io]: https://img.shields.io/crates/v/upnp-daemon
-//! [badge docs.rs]: https://img.shields.io/docsrs/upnp-daemon
 //! [badge license]: https://img.shields.io/crates/l/upnp-daemon
 //!
 //! [url github]: https://github.com/FloGa/upnp-daemon
 //! [url crates.io]: https://crates.io/crates/upnp-daemon
-//! [url docs.rs]: https://docs.rs/upnp-daemon
 //! [url license]: https://github.com/FloGa/upnp-daemon/blob/develop/LICENSE
 //!
 //! A daemon for continuously opening ports via UPnP.
@@ -352,7 +349,7 @@ use log::error;
 use serde_json::Value;
 use tempfile::tempfile;
 
-use easy_upnp::{add_ports, delete_ports, UpnpConfig};
+use easy_upnp::UpnpConfig;
 
 #[derive(Clone)]
 enum CliInput {
@@ -458,6 +455,22 @@ fn filter_out_and_log_errors(result: anyhow::Result<UpnpConfig>) -> Option<UpnpC
             err
         })
         .ok()
+}
+
+fn add_ports(configs: impl IntoIterator<Item = UpnpConfig>) {
+    for result in easy_upnp::add_ports(configs) {
+        if let Err(err) = result {
+            error!("{}", err);
+        }
+    }
+}
+
+fn delete_ports(configs: impl IntoIterator<Item = UpnpConfig>) {
+    for result in easy_upnp::delete_ports(configs) {
+        if let Err(err) = result {
+            error!("{}", err);
+        }
+    }
 }
 
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, ValueEnum)]
@@ -598,8 +611,13 @@ fn main() -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-#[test]
-fn verify_app() {
-    use clap::CommandFactory;
-    Cli::command().debug_assert()
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn verify_app() {
+        use clap::CommandFactory;
+        Cli::command().debug_assert()
+    }
 }

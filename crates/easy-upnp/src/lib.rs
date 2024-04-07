@@ -16,6 +16,8 @@
 //! [url license]:
 //! https://github.com/FloGa/upnp-daemon/blob/develop/crates/easy-upnp/LICENSE
 //!
+//! Easily open and close UPnP ports.
+//!
 //! A minimalistic wrapper around [IGD] to open and close network ports via
 //! [UPnP]. Mainly this library is used in the CLI application [`upnp-daemon`],
 //! but it can also be used as a library in other crates that just want to open
@@ -27,13 +29,13 @@
 //!
 //! ## Example
 //!
-//! Here is a hands-on example to demonstrate the usage. It will add some ports and immediately remove them again.
+//! Here is a hands-on example to demonstrate the usage. It will add some ports
+//! and immediately remove them again.
 //!
 //! ```rust no_run
 //! use std::error::Error;
-//!
-//! use cidr_utils::cidr::Ipv4Cidr;
-//! use easy_upnp::{add_ports, delete_ports, PortMappingProtocol, UpnpConfig};
+//! use log::error;
+//! use easy_upnp::{add_ports, delete_ports, Ipv4Cidr, PortMappingProtocol, UpnpConfig};
 //!
 //! fn get_configs() -> Result<[UpnpConfig; 3], Box<dyn Error>> {
 //!     let config_no_address = UpnpConfig {
@@ -68,9 +70,17 @@
 //! }
 //!
 //! fn main() -> Result<(), Box<dyn Error>> {
-//!     add_ports(get_configs()?);
+//!     for result in add_ports(get_configs()?) {
+//!         if let Err(err) = result {
+//!             error!("{}", err);
+//!         }
+//!     }
 //!
-//!     delete_ports(get_configs()?);
+//!     for result in delete_ports(get_configs()?) {
+//!         if let Err(err) = result {
+//!             error!("{}", err);
+//!         }
+//!     }
 //!
 //!     Ok(())
 //! }
@@ -78,13 +88,32 @@
 
 #![deny(missing_docs)]
 
-use std::error::Error;
 use std::net::{IpAddr, SocketAddr, SocketAddrV4};
 
-use cidr_utils::cidr::Ipv4Cidr;
-use igd::{AddPortError, Gateway, SearchOptions};
+pub use cidr_utils::cidr::Ipv4Cidr;
+use igd::{Gateway, SearchOptions};
 use log::{debug, error, info, warn};
 use serde::Deserialize;
+use thiserror::Error;
+
+/// Convenience wrapper over all possible Errors
+#[allow(missing_docs)]
+#[derive(Debug, Error)]
+pub enum Error {
+    #[error("No matching gateway found")]
+    NoMatchingGateway,
+
+    #[error("Could not get interface address: {0}")]
+    CannotGetInterfaceAddress(#[source] std::io::Error),
+
+    #[error("Error adding port: {0}")]
+    IgdAddPortError(#[from] igd::AddPortError),
+
+    #[error("Error searching for gateway: {0}")]
+    IgdSearchError(#[from] igd::SearchError),
+}
+
+type Result<R> = std::result::Result<R, Error>;
 
 /// The protocol for which the given port will be opened. Possible values are
 /// [`UDP`](PortMappingProtocol::UDP) and [`TCP`](PortMappingProtocol::TCP).
@@ -104,17 +133,18 @@ impl From<PortMappingProtocol> for igd::PortMappingProtocol {
     }
 }
 
-fn find_gateway_with_bind_addr(bind_addr: SocketAddr) -> Gateway {
+fn find_gateway_with_bind_addr(bind_addr: SocketAddr) -> Result<Gateway> {
     let options = SearchOptions {
         bind_addr,
         ..Default::default()
     };
-    igd::search_gateway(options).unwrap()
+    Ok(igd::search_gateway(options)?)
 }
 
-fn find_gateway_and_addr(cidr: &Option<Ipv4Cidr>) -> (Gateway, SocketAddr) {
-    let ifaces = get_if_addrs::get_if_addrs().unwrap();
-    ifaces
+fn find_gateway_and_addr(cidr: &Option<Ipv4Cidr>) -> Result<(Gateway, SocketAddr)> {
+    let ifaces = get_if_addrs::get_if_addrs().map_err(Error::CannotGetInterfaceAddress)?;
+
+    let (gateway, address) = ifaces
         .iter()
         .filter_map(|iface| {
             if iface.is_loopback() || !iface.ip().is_ipv4() {
@@ -136,12 +166,13 @@ fn find_gateway_and_addr(cidr: &Option<Ipv4Cidr>) -> (Gateway, SocketAddr) {
                     }
                     _ => {
                         let options = SearchOptions {
+                            // Unwrap is okay here, IP is correctly generated
                             bind_addr: format!("{}:0", iface.addr.ip()).parse().unwrap(),
                             ..Default::default()
                         };
                         igd::search_gateway(options).ok().and_then(|gateway| {
                             if let get_if_addrs::IfAddr::V4(addr) = &iface.addr {
-                                Some((gateway, SocketAddr::V4(SocketAddrV4::new(addr.ip, 0))))
+                                Some((Ok(gateway), SocketAddr::V4(SocketAddrV4::new(addr.ip, 0))))
                             } else {
                                 // Anything other than V4 has been ruled out by the first if
                                 // condition.
@@ -153,18 +184,20 @@ fn find_gateway_and_addr(cidr: &Option<Ipv4Cidr>) -> (Gateway, SocketAddr) {
             }
         })
         .next()
-        .unwrap()
+        .ok_or_else(|| Error::NoMatchingGateway)?;
+
+    Ok((gateway?, address))
 }
 
 fn get_gateway_and_address_from_options(
     address: &Option<Ipv4Cidr>,
     port: u16,
-) -> (Gateway, SocketAddrV4) {
-    match address {
+) -> Result<(Gateway, SocketAddrV4)> {
+    Ok(match address {
         Some(addr) if addr.get_bits() == 32 => {
             let addr = SocketAddr::new(IpAddr::V4(addr.get_prefix_as_ipv4_addr()), port);
 
-            let gateway = find_gateway_with_bind_addr(addr);
+            let gateway = find_gateway_with_bind_addr(addr)?;
 
             let addr = match addr {
                 SocketAddr::V4(addr) => addr,
@@ -175,7 +208,7 @@ fn get_gateway_and_address_from_options(
         }
 
         _ => {
-            let (gateway, mut addr) = find_gateway_and_addr(address);
+            let (gateway, mut addr) = find_gateway_and_addr(address)?;
             addr.set_port(port);
 
             let addr = match addr {
@@ -185,7 +218,7 @@ fn get_gateway_and_address_from_options(
 
             (gateway, addr)
         }
-    }
+    })
 }
 
 /// This struct defines a configuration for a port mapping.
@@ -195,9 +228,7 @@ fn get_gateway_and_address_from_options(
 /// # Examples
 ///
 /// ```
-/// use cidr_utils::cidr::Ipv4Cidr;
-///
-/// use easy_upnp::{PortMappingProtocol, UpnpConfig};
+/// use easy_upnp::{Ipv4Cidr, PortMappingProtocol, UpnpConfig};
 ///
 /// # fn main() -> Result<(), Box<dyn std::error::Error>> {
 /// let config_no_address = UpnpConfig {
@@ -265,11 +296,11 @@ pub struct UpnpConfig {
 }
 
 impl UpnpConfig {
-    fn remove_port(&self) {
+    fn remove_port(&self) -> Result<()> {
         let port = self.port;
         let protocol = self.protocol.into();
 
-        let (gateway, _) = get_gateway_and_address_from_options(&self.address, port);
+        let (gateway, _) = get_gateway_and_address_from_options(&self.address, port)?;
 
         gateway.remove_port(protocol, port).unwrap_or_else(|e| {
             warn!(
@@ -278,19 +309,21 @@ impl UpnpConfig {
             );
             warn!("{}", e);
         });
+
+        Ok(())
     }
 
-    fn add_port(&self) -> Result<(), Box<dyn Error>> {
+    fn add_port(&self) -> Result<()> {
         let port = self.port;
         let protocol = self.protocol.into();
         let duration = self.duration;
         let comment = &self.comment;
 
-        let (gateway, addr) = get_gateway_and_address_from_options(&self.address, port);
+        let (gateway, addr) = get_gateway_and_address_from_options(&self.address, port)?;
 
         let f = || gateway.add_port(protocol, port, addr, duration, comment);
         f().or_else(|e| match e {
-            AddPortError::PortInUse => {
+            igd::AddPortError::PortInUse => {
                 debug!("Port already in use. Delete mapping.");
                 gateway.remove_port(protocol, port).unwrap();
                 debug!("Retry port mapping.");
@@ -313,6 +346,7 @@ impl UpnpConfig {
 /// # Example
 ///
 /// ```no_run
+/// use log::error;
 /// use easy_upnp::{add_ports, PortMappingProtocol, UpnpConfig};
 ///
 /// let config = UpnpConfig {
@@ -323,15 +357,19 @@ impl UpnpConfig {
 ///     comment: "Webserver".to_string(),
 /// };
 ///
-/// add_ports([config]);
+/// for result in add_ports([config]) {
+///     if let Err(err) = result {
+///         error!("{}", err);
+///     }
+/// }
 /// ```
-pub fn add_ports(configs: impl IntoIterator<Item = UpnpConfig>) {
-    for config in configs {
+pub fn add_ports(
+    configs: impl IntoIterator<Item = UpnpConfig>,
+) -> impl Iterator<Item = Result<()>> {
+    configs.into_iter().map(|config| {
         info!("Add port: {:?}", config);
-        if let Err(err) = config.add_port() {
-            error!("{}", err);
-        }
-    }
+        config.add_port()
+    })
 }
 
 /// Delete port mappings.
@@ -344,6 +382,7 @@ pub fn add_ports(configs: impl IntoIterator<Item = UpnpConfig>) {
 /// # Example
 ///
 /// ```no_run
+/// use log::error;
 /// use easy_upnp::{delete_ports, PortMappingProtocol, UpnpConfig};
 ///
 /// let config = UpnpConfig {
@@ -354,11 +393,17 @@ pub fn add_ports(configs: impl IntoIterator<Item = UpnpConfig>) {
 ///     comment: "Webserver".to_string(),
 /// };
 ///
-/// delete_ports([config]);
+/// for result in delete_ports([config]) {
+///     if let Err(err) = result {
+///         error!("{}", err);
+///     }
+/// }
 /// ```
-pub fn delete_ports(configs: impl IntoIterator<Item = UpnpConfig>) {
-    for config in configs {
+pub fn delete_ports(
+    configs: impl IntoIterator<Item = UpnpConfig>,
+) -> impl Iterator<Item = Result<()>> {
+    configs.into_iter().map(|config| {
         info!("Remove port: {:?}", config);
-        config.remove_port();
-    }
+        config.remove_port()
+    })
 }

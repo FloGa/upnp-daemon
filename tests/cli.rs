@@ -30,24 +30,33 @@ fn correct_version() {
 
 #[test]
 fn empty_csv_input_passes() {
-    Command::new(&*BIN_PATH).arg("-1Ff-").assert().success();
+    let mut command = Command::new(&*BIN_PATH);
+    command.arg("-1f-");
+
+    #[cfg(unix)]
+    command.arg("-F");
+
+    command.assert().success();
 }
 
 #[test]
 fn empty_json_input_fails() {
-    Command::new(&*BIN_PATH)
-        .arg("-1Ff-")
-        .arg("--format=json")
-        .assert()
-        .failure();
+    let mut command = Command::new(&*BIN_PATH);
+    command.arg("-1f-").arg("--format=json");
+
+    #[cfg(unix)]
+    command.arg("-F");
+
+    command.assert().failure();
 }
 
 #[test]
 fn empty_json_array_input_passes() {
-    Command::new(&*BIN_PATH)
-        .arg("-1Ff-")
-        .arg("--format=json")
-        .write_stdin("[]")
-        .assert()
-        .success();
+    let mut command = Command::new(&*BIN_PATH);
+    command.arg("-1f-").arg("--format=json");
+
+    #[cfg(unix)]
+    command.arg("-F");
+
+    command.write_stdin("[]").assert().success();
 }
