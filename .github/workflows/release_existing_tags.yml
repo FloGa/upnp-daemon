@@ -5,6 +5,6 @@ on:
 
 jobs:
   call-release-exisiting-workflow:
-    uses: FloGa/rust-workflows/.github/workflows/release_existing_tags.yml@0.2.0
+    uses: FloGa/rust-workflows/.github/workflows/release_existing_tags.yml@0.5.0
     with:
       targets-config: ./.github/targets.json
