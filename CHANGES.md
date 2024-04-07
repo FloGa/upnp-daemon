@@ -1,4 +1,16 @@
-# Changes since latest release
+# Changes in 0.6.0
+
+-   Make integration tests runnable under windows
+
+-   Update to latest Rust workflow
+
+-   Add thiserror as dependency
+
+-   Move error output to main, use Result in lib
+
+-   Upgrade env_logger
+
+-   Update dependencies
 
 # Changes in 0.5.2
 
