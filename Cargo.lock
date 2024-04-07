@@ -259,7 +259,7 @@ checksum = "fea41bba32d969b513997752735605054bc0dfa92b4c56bf1189f2e174be7a10"
 
 [[package]]
 name = "easy-upnp"
-version = "0.2.0"
+version = "0.3.0-SNAPSHOT"
 dependencies = [
  "cidr-utils",
  "get_if_addrs",
@@ -768,7 +768,7 @@ dependencies = [
 
 [[package]]
 name = "upnp-daemon"
-version = "0.6.0"
+version = "0.7.0-SNAPSHOT"
 dependencies = [
  "anyhow",
  "assert_cmd",
