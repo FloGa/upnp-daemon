@@ -17,3 +17,4 @@ get_if_addrs.workspace = true
 igd.workspace = true
 log.workspace = true
 serde.workspace = true
+thiserror.workspace = true

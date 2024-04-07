@@ -62,6 +62,7 @@ log = "0.4.11"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1.0.96"
 tempfile = "3.5.0"
+thiserror = "1.0.58"
 
 # Development / test dependencies
 
