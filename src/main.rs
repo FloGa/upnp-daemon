@@ -349,7 +349,7 @@ use log::error;
 use serde_json::Value;
 use tempfile::tempfile;
 
-use easy_upnp::{add_ports, delete_ports, UpnpConfig};
+use easy_upnp::UpnpConfig;
 
 #[derive(Clone)]
 enum CliInput {
@@ -455,6 +455,22 @@ fn filter_out_and_log_errors(result: anyhow::Result<UpnpConfig>) -> Option<UpnpC
             err
         })
         .ok()
+}
+
+fn add_ports(configs: impl IntoIterator<Item = UpnpConfig>) {
+    for result in easy_upnp::add_ports(configs) {
+        if let Err(err) = result {
+            error!("{}", err);
+        }
+    }
+}
+
+fn delete_ports(configs: impl IntoIterator<Item = UpnpConfig>) {
+    for result in easy_upnp::delete_ports(configs) {
+        if let Err(err) = result {
+            error!("{}", err);
+        }
+    }
 }
 
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, ValueEnum)]

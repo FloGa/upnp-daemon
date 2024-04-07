@@ -34,7 +34,7 @@
 //!
 //! ```rust no_run
 //! use std::error::Error;
-//!
+//! use log::error;
 //! use cidr_utils::cidr::Ipv4Cidr;
 //! use easy_upnp::{add_ports, delete_ports, PortMappingProtocol, UpnpConfig};
 //!
@@ -71,9 +71,17 @@
 //! }
 //!
 //! fn main() -> Result<(), Box<dyn Error>> {
-//!     add_ports(get_configs()?);
+//!     for result in add_ports(get_configs()?) {
+//!         if let Err(err) = result {
+//!             error!("{}", err);
+//!         }
+//!     }
 //!
-//!     delete_ports(get_configs()?);
+//!     for result in delete_ports(get_configs()?) {
+//!         if let Err(err) = result {
+//!             error!("{}", err);
+//!         }
+//!     }
 //!
 //!     Ok(())
 //! }
@@ -341,6 +349,7 @@ impl UpnpConfig {
 /// # Example
 ///
 /// ```no_run
+/// use log::error;
 /// use easy_upnp::{add_ports, PortMappingProtocol, UpnpConfig};
 ///
 /// let config = UpnpConfig {
@@ -351,15 +360,19 @@ impl UpnpConfig {
 ///     comment: "Webserver".to_string(),
 /// };
 ///
-/// add_ports([config]);
+/// for result in add_ports([config]) {
+///     if let Err(err) = result {
+///         error!("{}", err);
+///     }
+/// }
 /// ```
-pub fn add_ports(configs: impl IntoIterator<Item = UpnpConfig>) {
-    for config in configs {
+pub fn add_ports(
+    configs: impl IntoIterator<Item = UpnpConfig>,
+) -> impl Iterator<Item = Result<()>> {
+    configs.into_iter().map(|config| {
         info!("Add port: {:?}", config);
-        if let Err(err) = config.add_port() {
-            error!("{}", err);
-        }
-    }
+        config.add_port()
+    })
 }
 
 /// Delete port mappings.
@@ -372,6 +385,7 @@ pub fn add_ports(configs: impl IntoIterator<Item = UpnpConfig>) {
 /// # Example
 ///
 /// ```no_run
+/// use log::error;
 /// use easy_upnp::{delete_ports, PortMappingProtocol, UpnpConfig};
 ///
 /// let config = UpnpConfig {
@@ -382,13 +396,17 @@ pub fn add_ports(configs: impl IntoIterator<Item = UpnpConfig>) {
 ///     comment: "Webserver".to_string(),
 /// };
 ///
-/// delete_ports([config]);
+/// for result in delete_ports([config]) {
+///     if let Err(err) = result {
+///         error!("{}", err);
+///     }
+/// }
 /// ```
-pub fn delete_ports(configs: impl IntoIterator<Item = UpnpConfig>) {
-    for config in configs {
+pub fn delete_ports(
+    configs: impl IntoIterator<Item = UpnpConfig>,
+) -> impl Iterator<Item = Result<()>> {
+    configs.into_iter().map(|config| {
         info!("Remove port: {:?}", config);
-        if let Err(err) = config.remove_port() {
-            error!("{}", err);
-        }
-    }
+        config.remove_port()
+    })
 }
