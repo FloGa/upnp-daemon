@@ -1,3 +1,7 @@
+# Changes in 0.2.1
+
+-   Update dependencies for security fixes
+
 # Changes in 0.2.0
 
 -   Add thiserror as dependency
