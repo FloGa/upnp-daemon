@@ -14,7 +14,7 @@ include.workspace = true
 [dependencies]
 cidr-utils.workspace = true
 get_if_addrs.workspace = true
-igd.workspace = true
+igd-next.workspace = true
 log.workspace = true
 serde.workspace = true
 thiserror.workspace = true

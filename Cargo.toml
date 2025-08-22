@@ -57,7 +57,7 @@ ctrlc = { version = "3.0", features = ["termination"] }
 daemonize = "0.5.0"
 env_logger = "0.11.3"
 get_if_addrs = "0.5.3"
-igd = "0.12.0"
+igd-next = "0.16.2"
 log = "0.4.11"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1.0.96"
@@ -68,4 +68,4 @@ thiserror = "1.0.58"
 
 assert_cmd = "2.0.11"
 lazy_static = "1.4.0"
-predicates = "3.0.1" # sync with assert_cmd
+predicates = "3.0.1"  # sync with assert_cmd
