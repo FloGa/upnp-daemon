@@ -142,7 +142,7 @@ fn find_gateway_with_bind_addr(bind_addr: SocketAddr) -> Result<Gateway> {
 }
 
 fn find_gateway_and_addr(cidr: &Option<Ipv4Cidr>) -> Result<(Gateway, SocketAddr)> {
-    let ifaces = get_if_addrs::get_if_addrs().map_err(Error::CannotGetInterfaceAddress)?;
+    let ifaces = if_addrs::get_if_addrs().map_err(Error::CannotGetInterfaceAddress)?;
 
     let (gateway, address) = ifaces
         .iter()
@@ -171,7 +171,7 @@ fn find_gateway_and_addr(cidr: &Option<Ipv4Cidr>) -> Result<(Gateway, SocketAddr
                             ..Default::default()
                         };
                         igd_next::search_gateway(options).ok().and_then(|gateway| {
-                            if let get_if_addrs::IfAddr::V4(addr) = &iface.addr {
+                            if let if_addrs::IfAddr::V4(addr) = &iface.addr {
                                 Some((Ok(gateway), SocketAddr::V4(SocketAddrV4::new(addr.ip, 0))))
                             } else {
                                 // Anything other than V4 has been ruled out by the first if
