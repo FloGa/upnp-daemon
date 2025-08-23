@@ -91,7 +91,7 @@
 use std::net::{IpAddr, SocketAddr, SocketAddrV4};
 
 pub use cidr_utils::cidr::Ipv4Cidr;
-use igd::{Gateway, SearchOptions};
+use igd_next::{Gateway, SearchOptions};
 use log::{debug, error, info, warn};
 use serde::Deserialize;
 use thiserror::Error;
@@ -107,10 +107,10 @@ pub enum Error {
     CannotGetInterfaceAddress(#[source] std::io::Error),
 
     #[error("Error adding port: {0}")]
-    IgdAddPortError(#[from] igd::AddPortError),
+    IgdAddPortError(#[from] igd_next::AddPortError),
 
     #[error("Error searching for gateway: {0}")]
-    IgdSearchError(#[from] igd::SearchError),
+    IgdSearchError(#[from] igd_next::SearchError),
 }
 
 type Result<R> = std::result::Result<R, Error>;
@@ -124,11 +124,11 @@ pub enum PortMappingProtocol {
     UDP,
 }
 
-impl From<PortMappingProtocol> for igd::PortMappingProtocol {
+impl From<PortMappingProtocol> for igd_next::PortMappingProtocol {
     fn from(proto: PortMappingProtocol) -> Self {
         match proto {
-            PortMappingProtocol::TCP => igd::PortMappingProtocol::TCP,
-            PortMappingProtocol::UDP => igd::PortMappingProtocol::UDP,
+            PortMappingProtocol::TCP => igd_next::PortMappingProtocol::TCP,
+            PortMappingProtocol::UDP => igd_next::PortMappingProtocol::UDP,
         }
     }
 }
@@ -138,11 +138,11 @@ fn find_gateway_with_bind_addr(bind_addr: SocketAddr) -> Result<Gateway> {
         bind_addr,
         ..Default::default()
     };
-    Ok(igd::search_gateway(options)?)
+    Ok(igd_next::search_gateway(options)?)
 }
 
 fn find_gateway_and_addr(cidr: &Option<Ipv4Cidr>) -> Result<(Gateway, SocketAddr)> {
-    let ifaces = get_if_addrs::get_if_addrs().map_err(Error::CannotGetInterfaceAddress)?;
+    let ifaces = if_addrs::get_if_addrs().map_err(Error::CannotGetInterfaceAddress)?;
 
     let (gateway, address) = ifaces
         .iter()
@@ -170,8 +170,8 @@ fn find_gateway_and_addr(cidr: &Option<Ipv4Cidr>) -> Result<(Gateway, SocketAddr
                             bind_addr: format!("{}:0", iface.addr.ip()).parse().unwrap(),
                             ..Default::default()
                         };
-                        igd::search_gateway(options).ok().and_then(|gateway| {
-                            if let get_if_addrs::IfAddr::V4(addr) = &iface.addr {
+                        igd_next::search_gateway(options).ok().and_then(|gateway| {
+                            if let if_addrs::IfAddr::V4(addr) = &iface.addr {
                                 Some((Ok(gateway), SocketAddr::V4(SocketAddrV4::new(addr.ip, 0))))
                             } else {
                                 // Anything other than V4 has been ruled out by the first if
@@ -192,33 +192,18 @@ fn find_gateway_and_addr(cidr: &Option<Ipv4Cidr>) -> Result<(Gateway, SocketAddr
 fn get_gateway_and_address_from_options(
     address: &Option<Ipv4Cidr>,
     port: u16,
-) -> Result<(Gateway, SocketAddrV4)> {
-    Ok(match address {
-        Some(addr) if addr.get_bits() == 32 => {
-            let addr = SocketAddr::new(IpAddr::V4(addr.get_prefix_as_ipv4_addr()), port);
-
-            let gateway = find_gateway_with_bind_addr(addr)?;
-
-            let addr = match addr {
-                SocketAddr::V4(addr) => addr,
-                _ => panic!("No IPv4 given"),
-            };
-
-            (gateway, addr)
+) -> Result<(Gateway, SocketAddr)> {
+    if let Some(addr) = address {
+        if addr.get_bits() == 32 {
+            let sock_addr = SocketAddr::new(IpAddr::V4(addr.get_prefix_as_ipv4_addr()), port);
+            let gateway = find_gateway_with_bind_addr(sock_addr)?;
+            return Ok((gateway, sock_addr));
         }
+    }
 
-        _ => {
-            let (gateway, mut addr) = find_gateway_and_addr(address)?;
-            addr.set_port(port);
-
-            let addr = match addr {
-                SocketAddr::V4(addr) => addr,
-                _ => panic!("No IPv4 given"),
-            };
-
-            (gateway, addr)
-        }
-    })
+    let (gateway, mut addr) = find_gateway_and_addr(address)?;
+    addr.set_port(port);
+    Ok((gateway, addr))
 }
 
 /// This struct defines a configuration for a port mapping.
@@ -323,7 +308,7 @@ impl UpnpConfig {
 
         let f = || gateway.add_port(protocol, port, addr, duration, comment);
         f().or_else(|e| match e {
-            igd::AddPortError::PortInUse => {
+            igd_next::AddPortError::PortInUse => {
                 debug!("Port already in use. Delete mapping.");
                 gateway.remove_port(protocol, port).unwrap();
                 debug!("Retry port mapping.");
