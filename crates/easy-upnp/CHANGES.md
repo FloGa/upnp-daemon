@@ -1,5 +1,14 @@
 # Changes in 0.3.0-RC
 
+-   Use latest versions of `igd-next` and `if-addrs`
+
+    The `get_if_addrs` crate depends on a `winapi` version lower than 0.3, which prevents compilation for the Windows
+    ARM target. In addition, both `igd` and `get_if_addrs` have been archived and are no longer maintained.
+
+    Special thanks to TianHua Liu (Taoister39) for this PR!
+
+-   Update dependencies
+
 # Changes in 0.2.1
 
 -   Update dependencies for security fixes
