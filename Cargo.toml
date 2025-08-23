@@ -1,6 +1,6 @@
 [package]
 name = "upnp-daemon"
-version = "0.6.1"
+version = "0.7.0"
 description = "A daemon for continuously opening ports via UPnP."
 readme = "README.md"
 categories = ["command-line-utilities", "network-programming"]
@@ -45,7 +45,7 @@ include = ["src/**/*", "LICENSE", "README.md"]
 
 # Internal dependencies
 
-easy-upnp = { version = "0.2.1", path = "crates/easy-upnp" }
+easy-upnp = { version = "0.3.0", path = "crates/easy-upnp" }
 
 # Runtime dependencies
 
@@ -56,16 +56,16 @@ csv = "1.1"
 ctrlc = { version = "3.0", features = ["termination"] }
 daemonize = "0.5.0"
 env_logger = "0.11.3"
-get_if_addrs = "0.5.3"
-igd = "0.12.0"
+if-addrs = "0.14.0"
+igd-next = "0.16.2"
 log = "0.4.11"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1.0.96"
 tempfile = "3.5.0"
-thiserror = "1.0.58"
+thiserror = "2.0.16"
 
 # Development / test dependencies
 
 assert_cmd = "2.0.11"
 lazy_static = "1.4.0"
-predicates = "3.0.1" # sync with assert_cmd
+predicates = "3.0.1"  # sync with assert_cmd
