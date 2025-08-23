@@ -1,4 +1,33 @@
-# Changes since latest release
+# Changes in 0.7.0
+
+-   Use latest versions of `igd-next` and `if-addrs`
+
+    The `get_if_addrs` crate depends on a `winapi` version lower than 0.3, which prevents compilation for the Windows
+    ARM target. In addition, both `igd` and `get_if_addrs` have been archived and are no longer maintained.
+
+    Special thanks to TianHua Liu (Taoister39) for this PR!
+
+-   Update dependencies
+
+-   Add more targets to pipeline build
+
+    The following targets will now be build by the pipeline:
+
+    -   Linux
+    -   aarch64-unknown-linux-gnu
+    -   arm-unknown-linux-gnueabihf
+    -   armv7-unknown-linux-gnueabihf
+    -   i686-unknown-linux-gnu
+    -   i686-unknown-linux-musl
+    -   x86_64-unknown-linux-gnu
+    -   x86_64-unknown-linux-musl
+    -   MacOS
+    -   aarch64-apple-darwin
+    -   x86_64-apple-darwin
+    -   Windows
+    -   aarch64-pc-windows-msvc
+    -   i686-pc-windows-msvc
+    -   x86_64-pc-windows-msvc
 
 # Changes in 0.6.1
 
