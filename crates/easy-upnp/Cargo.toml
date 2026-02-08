@@ -12,7 +12,7 @@ license.workspace = true
 include.workspace = true
 
 [dependencies]
-cidr-utils.workspace = true
+cidr.workspace = true
 if-addrs.workspace = true
 igd-next.workspace = true
 log.workspace = true

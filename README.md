@@ -303,11 +303,8 @@ to specify a JSON array.
     (or it might change from time to time), but you know the DHCP
     configuration of your router.
 
-    Such an IP address might be `192.168.0.10` or `192.168.0.0/24` or even
-    `192.168.0`.
-
-    More examples can be found in the responsible library's documentation:
-    <https://docs.rs/cidr-utils/0.5.10/cidr_utils/index.html>
+    An example of such an IP address might be `192.168.0.10` for a specific host or `192.168.0.0/24` for the address
+    range from `192.168.0.1` to `192.168.0.255`.
 
 -   port
 

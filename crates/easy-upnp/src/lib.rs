@@ -34,6 +34,7 @@
 //!
 //! ```rust no_run
 //! use std::error::Error;
+//! use std::str::FromStr;
 //! use log::error;
 //! use easy_upnp::{add_ports, delete_ports, Ipv4Cidr, PortMappingProtocol, UpnpConfig};
 //!
@@ -47,7 +48,7 @@
 //!     };
 //!
 //!     let config_specific_address = UpnpConfig {
-//!         address: Some(Ipv4Cidr::from_str("192.168.0.10/24")?),
+//!         address: Some(Ipv4Cidr::from_str("192.168.0.10")?),
 //!         port: 8080,
 //!         protocol: PortMappingProtocol::TCP,
 //!         duration: 3600,
@@ -55,7 +56,7 @@
 //!     };
 //!
 //!     let config_address_range = UpnpConfig {
-//!         address: Some(Ipv4Cidr::from_str("192.168.0")?),
+//!         address: Some(Ipv4Cidr::from_str("192.168.0.0/24")?),
 //!         port: 8081,
 //!         protocol: PortMappingProtocol::TCP,
 //!         duration: 3600,
@@ -90,7 +91,7 @@
 
 use std::net::{IpAddr, SocketAddr, SocketAddrV4};
 
-pub use cidr_utils::cidr::Ipv4Cidr;
+pub use cidr::Ipv4Cidr;
 use igd_next::{Gateway, SearchOptions};
 use log::{debug, error, info, warn};
 use serde::Deserialize;
@@ -156,7 +157,7 @@ fn find_gateway_and_addr(cidr: &Option<Ipv4Cidr>) -> Result<(Gateway, SocketAddr
                 };
 
                 match cidr {
-                    Some(cidr) if !cidr.contains(iface_ip) => None,
+                    Some(cidr) if !cidr.contains(&iface_ip) => None,
                     Some(_) => {
                         let addr = SocketAddr::new(IpAddr::V4(iface_ip), 0);
 
@@ -194,8 +195,8 @@ fn get_gateway_and_address_from_options(
     port: u16,
 ) -> Result<(Gateway, SocketAddr)> {
     if let Some(addr) = address {
-        if addr.get_bits() == 32 {
-            let sock_addr = SocketAddr::new(IpAddr::V4(addr.get_prefix_as_ipv4_addr()), port);
+        if addr.is_host_address() {
+            let sock_addr = SocketAddr::new(IpAddr::V4(addr.first_address()), port);
             let gateway = find_gateway_with_bind_addr(sock_addr)?;
             return Ok((gateway, sock_addr));
         }
@@ -213,6 +214,7 @@ fn get_gateway_and_address_from_options(
 /// # Examples
 ///
 /// ```
+/// use std::str::FromStr;
 /// use easy_upnp::{Ipv4Cidr, PortMappingProtocol, UpnpConfig};
 ///
 /// # fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -225,7 +227,7 @@ fn get_gateway_and_address_from_options(
 /// };
 ///
 /// let config_specific_address = UpnpConfig {
-///     address: Some(Ipv4Cidr::from_str("192.168.0.10/24")?),
+///     address: Some(Ipv4Cidr::from_str("192.168.0.10")?),
 ///     port: 80,
 ///     protocol: PortMappingProtocol::TCP,
 ///     duration: 3600,
@@ -233,7 +235,7 @@ fn get_gateway_and_address_from_options(
 /// };
 ///
 /// let config_address_range = UpnpConfig {
-///     address: Some(Ipv4Cidr::from_str("192.168.0")?),
+///     address: Some(Ipv4Cidr::from_str("192.168.0.0/24")?),
 ///     port: 80,
 ///     protocol: PortMappingProtocol::TCP,
 ///     duration: 3600,

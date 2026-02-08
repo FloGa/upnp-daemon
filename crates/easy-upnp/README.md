@@ -34,6 +34,7 @@ and immediately remove them again.
 
 ```rust no_run
 use std::error::Error;
+use std::str::FromStr;
 use log::error;
 use easy_upnp::{add_ports, delete_ports, Ipv4Cidr, PortMappingProtocol, UpnpConfig};
 
@@ -47,7 +48,7 @@ fn get_configs() -> Result<[UpnpConfig; 3], Box<dyn Error>> {
     };
 
     let config_specific_address = UpnpConfig {
-        address: Some(Ipv4Cidr::from_str("192.168.0.10/24")?),
+        address: Some(Ipv4Cidr::from_str("192.168.0.10")?),
         port: 8080,
         protocol: PortMappingProtocol::TCP,
         duration: 3600,
@@ -55,7 +56,7 @@ fn get_configs() -> Result<[UpnpConfig; 3], Box<dyn Error>> {
     };
 
     let config_address_range = UpnpConfig {
-        address: Some(Ipv4Cidr::from_str("192.168.0")?),
+        address: Some(Ipv4Cidr::from_str("192.168.0.0/24")?),
         port: 8081,
         protocol: PortMappingProtocol::TCP,
         duration: 3600,

@@ -50,13 +50,13 @@ easy-upnp = { version = "0.4.0-SNAPSHOT", path = "crates/easy-upnp" }
 # Runtime dependencies
 
 anyhow = "1.0.70"
-cidr-utils = { version = "0.5.10", features = ["serde"] }
+cidr = { version = "0.3.2", features = ["serde"] }
 clap = { version = "4.2.4", features = ["derive"] }
 csv = "1.1"
 ctrlc = { version = "3.0", features = ["termination"] }
 daemonize = "0.5.0"
 env_logger = "0.11.3"
-if-addrs = "0.14.0"
+if-addrs = "0.15.0"
 igd-next = "0.16.2"
 log = "0.4.11"
 serde = { version = "1", features = ["derive"] }
