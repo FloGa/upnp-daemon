@@ -1,4 +1,6 @@
-# Changes since latest release
+# Changes in 0.3.1
+
+-   Update dependencies and fix version conflicts
 
 # Changes in 0.3.0
 
