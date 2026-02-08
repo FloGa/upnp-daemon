@@ -185,7 +185,7 @@ fn find_gateway_and_addr(cidr: &Option<Ipv4Cidr>) -> Result<(Gateway, SocketAddr
             }
         })
         .next()
-        .ok_or_else(|| Error::NoMatchingGateway)?;
+        .ok_or(Error::NoMatchingGateway)?;
 
     Ok((gateway?, address))
 }
