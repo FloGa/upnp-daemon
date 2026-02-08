@@ -93,7 +93,7 @@ use std::net::{IpAddr, SocketAddr, SocketAddrV4};
 
 pub use cidr::Ipv4Cidr;
 use igd_next::{Gateway, SearchOptions};
-use log::{debug, error, info, warn};
+use log::{debug, info, warn};
 use serde::Deserialize;
 use thiserror::Error;
 
