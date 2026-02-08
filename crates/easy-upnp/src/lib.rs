@@ -5,6 +5,7 @@
 //! [![badge docs.rs]][url docs.rs]
 //! [![badge license]][url license]
 //!
+//! [//]: # (@formatter:off)
 //! [badge github]: https://img.shields.io/badge/github-FloGa%2Fupnp--daemon-green
 //! [badge crates.io]: https://img.shields.io/crates/v/easy-upnp
 //! [badge docs.rs]: https://img.shields.io/docsrs/easy-upnp
@@ -13,8 +14,8 @@
 //! [url github]: https://github.com/FloGa/upnp-daemon/crates/easy-upnp
 //! [url crates.io]: https://crates.io/crates/easy-upnp
 //! [url docs.rs]: https://docs.rs/easy-upnp
-//! [url license]:
-//! https://github.com/FloGa/upnp-daemon/blob/develop/crates/easy-upnp/LICENSE
+//! [url license]: https://github.com/FloGa/upnp-daemon/blob/develop/crates/easy-upnp/LICENSE
+//! [//]: # (@formatter:on)
 //!
 //! Easily open and close UPnP ports.
 //!
@@ -24,7 +25,9 @@
 //! and close ports with minimal possible configuration.
 //!
 //! [IGD]: https://docs.rs/igd/
+//!
 //! [UPnP]: https://en.wikipedia.org/wiki/Universal_Plug_and_Play
+//!
 //! [`upnp-daemon`]: https://github.com/FloGa/upnp-daemon
 //!
 //! ## Example
