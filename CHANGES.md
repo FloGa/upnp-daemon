@@ -1,4 +1,4 @@
-# Changes in 0.7.1-RC
+# Changes in 0.7.1
 
 -   Update dependencies and fix version conflicts
 
