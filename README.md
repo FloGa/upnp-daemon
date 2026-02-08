@@ -4,6 +4,7 @@
 [![badge crates.io]][url crates.io]
 [![badge license]][url license]
 
+[//]: # (@formatter:off)
 [badge github]: https://img.shields.io/badge/github-FloGa%2Fupnp--daemon-green
 [badge crates.io]: https://img.shields.io/crates/v/upnp-daemon
 [badge license]: https://img.shields.io/crates/l/upnp-daemon
@@ -11,6 +12,7 @@
 [url github]: https://github.com/FloGa/upnp-daemon
 [url crates.io]: https://crates.io/crates/upnp-daemon
 [url license]: https://github.com/FloGa/upnp-daemon/blob/develop/LICENSE
+[//]: # (@formatter:on)
 
 A daemon for continuously opening ports via UPnP.
 
@@ -292,7 +294,7 @@ to specify a JSON array.
     be empty, in which case every connected interface will be tried, until one
     gateway reports success. Useful if the IP address is dynamic and not
     consistent over reboots.
-    
+
     Fill in an IP address if you want to add a port mapping for a foreign
     device, or if you know your machine's address and want to slightly speed
     up the process.
