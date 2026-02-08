@@ -1,3 +1,7 @@
+# Changes in 0.3.1
+
+-   Update dependencies and fix version conflicts
+
 # Changes in 0.3.0
 
 -   Use latest versions of `igd-next` and `if-addrs`

@@ -1,3 +1,7 @@
+# Changes in 0.7.1
+
+-   Update dependencies and fix version conflicts
+
 # Changes in 0.7.0
 
 -   Use latest versions of `igd-next` and `if-addrs`
@@ -14,20 +18,20 @@
     The following targets will now be build by the pipeline:
 
     -   Linux
-    -   aarch64-unknown-linux-gnu
-    -   arm-unknown-linux-gnueabihf
-    -   armv7-unknown-linux-gnueabihf
-    -   i686-unknown-linux-gnu
-    -   i686-unknown-linux-musl
-    -   x86_64-unknown-linux-gnu
-    -   x86_64-unknown-linux-musl
+        -   aarch64-unknown-linux-gnu
+        -   arm-unknown-linux-gnueabihf
+        -   armv7-unknown-linux-gnueabihf
+        -   i686-unknown-linux-gnu
+        -   i686-unknown-linux-musl
+        -   x86_64-unknown-linux-gnu
+        -   x86_64-unknown-linux-musl
     -   MacOS
-    -   aarch64-apple-darwin
-    -   x86_64-apple-darwin
+        -   aarch64-apple-darwin
+        -   x86_64-apple-darwin
     -   Windows
-    -   aarch64-pc-windows-msvc
-    -   i686-pc-windows-msvc
-    -   x86_64-pc-windows-msvc
+        -   aarch64-pc-windows-msvc
+        -   i686-pc-windows-msvc
+        -   x86_64-pc-windows-msvc
 
 # Changes in 0.6.1
 
