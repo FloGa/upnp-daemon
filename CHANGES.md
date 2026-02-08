@@ -1,5 +1,7 @@
 # Changes since latest release
 
+-   Update dependencies and fix version conflicts
+
 # Changes in 0.7.0
 
 -   Use latest versions of `igd-next` and `if-addrs`
