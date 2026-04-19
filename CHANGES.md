@@ -1,5 +1,9 @@
 # Changes since latest release
 
+# Changes in 0.7.2
+
+-   Update dependencies
+
 # Changes in 0.7.1
 
 -   Update dependencies and fix version conflicts
