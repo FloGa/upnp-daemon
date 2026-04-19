@@ -297,7 +297,7 @@ dependencies = [
 
 [[package]]
 name = "easy-upnp"
-version = "0.3.2"
+version = "0.4.0-SNAPSHOT"
 dependencies = [
  "cidr",
  "if-addrs",
@@ -1008,7 +1008,7 @@ checksum = "ebc1c04c71510c7f702b52b7c350734c9ff1295c464a03335b00bb84fc54f853"
 
 [[package]]
 name = "upnp-daemon"
-version = "0.7.2"
+version = "0.8.0-SNAPSHOT"
 dependencies = [
  "anyhow",
  "assert_cmd",
